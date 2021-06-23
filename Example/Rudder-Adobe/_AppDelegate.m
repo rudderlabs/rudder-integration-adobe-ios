@@ -34,6 +34,130 @@
     [RSClient getInstance:WRITE_KEY config:[configBuilder build]];
     
     
+    
+//    [[RSClient sharedInstance] identify:@"iOS_user_new"];
+//    [[RSClient sharedInstance] track:@"Order Completed" properties:@{
+//        @"revenue" : @1001,
+//        @"orderId" : @"1001",
+//        @"currency" : @"USD",
+//        @"custom_1" : @"1custom",
+//        @"custom_2" : @1345,
+//        @"products" : @[
+//                @{
+//                    @"category" : @"11Cloths",
+//                    @"product_id" : @"100001",
+//                    @"name": @"11Shirt",
+//                    @"price" : @101,
+//                    @"quantity" : @11
+//                },
+//                @{
+//                    @"category" : @"12Cloths",
+//                    @"product_id" : @"100002",
+//                    @"name": @"12shirt",
+//                    @"price" : @102,
+//                    @"quantity" : @12
+//                }
+//        ]
+//    }];
+//
+//    [[RSClient sharedInstance] track:@"Order Completed" properties:@{
+//        @"revenue" : @1001,
+//        @"orderId" : @"1001",
+//        @"currency" : @"USD",
+//        @"custom_1" : @"1custom",
+//        @"custom_2" : @1345,
+//        @"category" : @"11Cloths",
+//        @"productId" : @"100001",
+//        @"name": @"11Shirt",
+//        @"price" : @101,
+//        @"quantity" : @11
+//    }];
+//
+//    [[RSClient sharedInstance] track:@"Product Added"
+//                          properties:@{
+//                              @"productId" : @"200001",
+//                              @"name": @"21Bag",
+//                              @"quantity" : @21,
+//                              @"price" : @201,
+//                              @"custom_1" : @"2custom"
+//                          }];
+//
+//    [[RSClient sharedInstance] track:@"Checkout Started"
+//                          properties:@{
+//                              @"revenue" : @3001,
+//                              @"orderId" : @3001,
+//                              @"currency" : @"USD",
+//                              @"custom_1" : @"3custom",
+//                              @"custom_2" : @3345,
+//                              @"products" : @[
+//                                      @{
+//                                          @"category" : @"31Cloths",
+//                                          @"product_id" : @300001,
+//                                          @"name": @"31Shirt",
+//                                          @"price" : @301,
+//                                          @"quantity" : @31
+//                                      },
+//                                      @{
+//                                          @"category" : @"32Cloths",
+//                                          @"product_id" : @"300002",
+//                                          @"name": @"32shirt",
+//                                          @"price" : @302,
+//                                          @"quantity" : @32
+//                                      }
+//                              ]
+//                          }];
+//
+//    [[RSClient sharedInstance] track:@"Checkout Started"
+//                          properties:@{
+//                              @"custom_2" : @32345,
+//                              @"products" : @[
+//                                      @{
+//                                          @"product_id" : @3200001,
+//                                          @"name": @"33Shirt",
+//                                          @"price" : @301
+//                                      },
+//                                      @{
+//                                          @"product_id" : @"3200002",
+//                                          @"name": @"34shirt",
+//                                          @"quantity" : @32
+//                                      }
+//                              ]
+//                          }];
+//    
+//    [[RSClient sharedInstance] track:@"Checkout Started"
+//                          properties:@{
+//                              @"custom_2" : @32345,
+//                          }];
+//
+//    [[RSClient sharedInstance] track:@"cart viewed"
+//                              properties:@{
+//                                  @"custom_2" : @4345,
+//                              }];
+//
+//    [[RSClient sharedInstance] track:@"product removed"
+//                              properties:@{
+//                                  @"custom_2" : @5345,
+//                              }];
+//
+//    [[RSClient sharedInstance] track:@"product viewed"
+//                              properties:@{
+//                                  @"custom_2" : @6345,
+//                              }];
+//
+//    [[RSClient sharedInstance] track:@"myapp.ActionName"
+//                              properties:@{
+//                                  @"custom_2" : @72345,
+//                              }];
+//
+//    [[RSClient sharedInstance] screen:@"screen_call"
+//                                  properties:@{
+//                                      @"custom_2" : @82345,
+//                                  }];
+//
+    //--------------------------------------------------------------------------------
+    
+    
+    /*
     NSMutableDictionary<NSString *, id> *products1 = [NSMutableDictionary<NSString *, id> dictionary];
     [products1 setObject: @"Games"  forKey: @"category"];
     [products1 setObject: @"1234" forKey: @"id"];
@@ -56,6 +180,37 @@
         @"key_2" : @"value_2",
         @"products" : product
     }];
+    
+    [[RSClient sharedInstance] track:@"product removed" properties:@{
+        @"key_1" : @YES,
+        @"key_2" : @"value_2",
+        @"products" : product
+    }];
+    
+    [[RSClient sharedInstance] track:@"cart viewed" properties:@{
+        @"key_1" : @YES,
+        @"key_2" : @"value_2",
+        @"products" : product
+    }];
+    
+    [[RSClient sharedInstance] track:@"checkout started" properties:@{
+        @"key_1" : @YES,
+        @"key_2" : @"value_2",
+        @"products" : product
+    }];
+    
+    [[RSClient sharedInstance] track:@"order completed" properties:@{
+        @"key_1" : @YES,
+        @"key_2" : @"value_2",
+        @"products" : product
+    }];
+    
+    [[RSClient sharedInstance] track:@"product viewed" properties:@{
+        @"key_1" : @YES,
+        @"key_2" : @"value_2",
+        @"products" : product
+    }];
+    */
     
     
     return YES;
@@ -90,3 +245,11 @@
 }
 
 @end
+
+
+/*
+ 
+ Rudder-Adobe_Example[26725:4783087] ADBMobile Debug: Analytics - Successfully sent hit(ndh=1&t=00%2F00%2F0000%2000%3A00%3A00%200%20-330&c.&orderId=1001&products=%7B%0A%20%20%20%20category%20%3D%2011Cloths%3B%0A%20%20%20%20name%20%3D%2011Shirt%3B%0A%20%20%20%20price%20%3D%20101%3B%0A%20%20%20%20productId%20%3D%20100001%3B%0A%20%20%20%20quantity%20%3D%2011%3B%0A%7D%2C%7B%0A%20%20%20%20category%20%3D%2012Cloths%3B%0A%20%20%20%20name%20%3D%2012shirt%3B%0A%20%20%20%20price%20%3D%20102%3B%0A%20%20%20%20%22product_id%22%20%3D%20100002%3B%0A%20%20%20%20quantity%20%3D%2012%3B%0A%7D&custom_2=1345&revenue=1001&custom_1=1custom&a.&action=myapp.ActionName&OSVersion=iOS%2014.5&DeviceName=x86_64&RunMode=Application&AppID=Rudder-Adobe_Example%201.0%20%281.0%29&CarrierName=%28null%29&Resolution=1170x2532&TimeSinceLaunch=5&.a&currency=USD&.c&mid=52105007788800746111447584121836330116&pev2=AMACTION%3Amyapp.ActionName&ts=1624449697&pageName=Rudder-Adobe_Example%2F1.0&vid=iOS_user&pe=lnk_o&ce=UTF-8&cp=foreground)
+ 
+ 
+ */
