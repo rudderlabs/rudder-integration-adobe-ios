@@ -22,16 +22,42 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
-    NSString *WRITE_KEY = @"1pcZviVxgjd3rTUUmaTUBinGH0A";
-    NSString *DATA_PLANE_URL = @"https://fa4236d77f5c.ngrok.io";
+    NSString *WRITE_KEY = @"1s4gjAsjU2O41t6JwCGsCgZf6sg";
+    NSString *DATA_PLANE_URL = @"https://8b2e94cad5ff.ngrok.io";
     
     RSConfigBuilder *configBuilder = [[RSConfigBuilder alloc] init];
     [configBuilder withDataPlaneUrl:DATA_PLANE_URL];
-    //[configBuilder withControlPlaneUrl:@"https://87d77a187bed.ngrok.io"];
-    [configBuilder withLoglevel:RSLogLevelDebug];
+    [configBuilder withControlPlaneUrl:@"https://fcc1cb53a2cd.ngrok.io"];
+    //[configBuilder withLoglevel:RSLogLevelDebug];
     [configBuilder withFactory:[RudderAdobeFactory instance]];
     // [configBuilder withTrackLifecycleEvens:false];
     [RSClient getInstance:WRITE_KEY config:[configBuilder build]];
+    
+    
+    NSMutableDictionary<NSString *, id> *products1 = [NSMutableDictionary<NSString *, id> dictionary];
+    [products1 setObject: @"Games"  forKey: @"category"];
+    [products1 setObject: @"1234" forKey: @"id"];
+    [products1 setObject: @"20" forKey: @"quantity"];
+    [products1 setObject: @"5001" forKey: @"price"];
+    [products1 setObject: @"Abhishek" forKey: @"name"];
+
+    NSMutableDictionary<NSString *, id> *products2 = [NSMutableDictionary<NSString *, id> dictionary];
+    [products2 setObject: @"Games"  forKey: @"category"];
+    [products2 setObject: @"1234" forKey: @"product_id"];
+    [products2 setObject: @"20" forKey: @"quantity"];
+    [products2 setObject: @"5001" forKey: @"price"];
+    
+    NSMutableArray<NSObject *>* product = [NSMutableArray array];
+    [product addObject: products1];
+    [product addObject: products2];
+    
+    [[RSClient sharedInstance] track:@"Product Added" properties:@{
+        @"key_1" : @YES,
+        @"key_2" : @"value_2",
+        @"products" : product
+    }];
+    
+    
     return YES;
 }
 

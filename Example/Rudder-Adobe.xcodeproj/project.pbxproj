@@ -7,23 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4292B8536E4C8C021B8C1264 /* libPods-Rudder-Adobe_Example.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 82574D7A8D8494096B3DB776 /* libPods-Rudder-Adobe_Example.a */; };
+		58F34C90124B403F935D2E0F /* libPods-Rudder-Adobe_Tests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C850E2310FF876E27E512DA3 /* libPods-Rudder-Adobe_Tests.a */; };
 		6003F58E195388D20070C39A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58D195388D20070C39A /* Foundation.framework */; };
-		6003F590195388D20070C39A /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58F195388D20070C39A /* CoreGraphics.framework */; };
-		6003F592195388D20070C39A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F591195388D20070C39A /* UIKit.framework */; };
 		6003F598195388D20070C39A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6003F596195388D20070C39A /* InfoPlist.strings */; };
 		6003F59A195388D20070C39A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F599195388D20070C39A /* main.m */; };
 		6003F59E195388D20070C39A /* _AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F59D195388D20070C39A /* _AppDelegate.m */; };
 		6003F5A7195388D20070C39A /* _ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5A6195388D20070C39A /* _ViewController.m */; };
 		6003F5A9195388D20070C39A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5A8195388D20070C39A /* Images.xcassets */; };
-		6003F5B0195388D20070C39A /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F5AF195388D20070C39A /* XCTest.framework */; };
 		6003F5B1195388D20070C39A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58D195388D20070C39A /* Foundation.framework */; };
-		6003F5B2195388D20070C39A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F591195388D20070C39A /* UIKit.framework */; };
 		6003F5BA195388D20070C39A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5B8195388D20070C39A /* InfoPlist.strings */; };
 		6003F5BC195388D20070C39A /* Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5BB195388D20070C39A /* Tests.m */; };
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
-		7F7F936471BF5F8D3005AE41 /* Pods_Rudder_Adobe_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 459B447B31E699824A7A58E3 /* Pods_Rudder_Adobe_Tests.framework */; };
 		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
-		9EACA14DD0B505109822B273 /* Pods_Rudder_Adobe_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43337BD6B6DE153511771809 /* Pods_Rudder_Adobe_Example.framework */; };
+		8C957F41267B61F600ADB9B7 /* ADBMobileConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 8C957F40267B61F600ADB9B7 /* ADBMobileConfig.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,13 +38,9 @@
 		12F91D76530B3B279310D5C3 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		2320FE5EECC05063A59001A1 /* Pods-Rudder-Adobe_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Rudder-Adobe_Tests.debug.xcconfig"; path = "Target Support Files/Pods-Rudder-Adobe_Tests/Pods-Rudder-Adobe_Tests.debug.xcconfig"; sourceTree = "<group>"; };
 		40464C1DF088713795CA4177 /* Rudder-Adobe.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "Rudder-Adobe.podspec"; path = "../Rudder-Adobe.podspec"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
-		43337BD6B6DE153511771809 /* Pods_Rudder_Adobe_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Rudder_Adobe_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		459B447B31E699824A7A58E3 /* Pods_Rudder_Adobe_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Rudder_Adobe_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5DCC105AB92B9EC5620070E0 /* Pods-Rudder-Adobe_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Rudder-Adobe_Tests.release.xcconfig"; path = "Target Support Files/Pods-Rudder-Adobe_Tests/Pods-Rudder-Adobe_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		6003F58A195388D20070C39A /* Rudder-Adobe_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Rudder-Adobe_Example.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6003F58D195388D20070C39A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		6003F58F195388D20070C39A /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		6003F591195388D20070C39A /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		6003F595195388D20070C39A /* Rudder-Adobe-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Rudder-Adobe-Info.plist"; sourceTree = "<group>"; };
 		6003F597195388D20070C39A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		6003F599195388D20070C39A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -58,15 +51,19 @@
 		6003F5A6195388D20070C39A /* _ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = _ViewController.m; sourceTree = "<group>"; };
 		6003F5A8195388D20070C39A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		6003F5AE195388D20070C39A /* Rudder-Adobe_Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Rudder-Adobe_Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		6003F5AF195388D20070C39A /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		6003F5B7195388D20070C39A /* Tests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Tests-Info.plist"; sourceTree = "<group>"; };
 		6003F5B9195388D20070C39A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		6003F5BB195388D20070C39A /* Tests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Tests.m; sourceTree = "<group>"; };
 		606FC2411953D9B200FFA9A0 /* Tests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tests-Prefix.pch"; sourceTree = "<group>"; };
 		71719F9E1E33DC2100824A3D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		82574D7A8D8494096B3DB776 /* libPods-Rudder-Adobe_Example.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Rudder-Adobe_Example.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		831BC2F8BAD46139600554C0 /* Pods-Rudder-Adobe_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Rudder-Adobe_Example.debug.xcconfig"; path = "Target Support Files/Pods-Rudder-Adobe_Example/Pods-Rudder-Adobe_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		8C957F29267B4CC900ADB9B7 /* MediaSDK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = MediaSDK.xcframework; sourceTree = "<group>"; };
+		8C957F2A267B4CC900ADB9B7 /* MediaSDKTV.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = MediaSDKTV.xcframework; sourceTree = "<group>"; };
+		8C957F40267B61F600ADB9B7 /* ADBMobileConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = ADBMobileConfig.json; path = ../ADBMobileConfig.json; sourceTree = "<group>"; };
 		A5A6D50DF14C6F6409B28C0C /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
+		C850E2310FF876E27E512DA3 /* libPods-Rudder-Adobe_Tests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Rudder-Adobe_Tests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,10 +71,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6003F590195388D20070C39A /* CoreGraphics.framework in Frameworks */,
-				6003F592195388D20070C39A /* UIKit.framework in Frameworks */,
 				6003F58E195388D20070C39A /* Foundation.framework in Frameworks */,
-				9EACA14DD0B505109822B273 /* Pods_Rudder_Adobe_Example.framework in Frameworks */,
+				4292B8536E4C8C021B8C1264 /* libPods-Rudder-Adobe_Example.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,10 +80,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6003F5B0195388D20070C39A /* XCTest.framework in Frameworks */,
-				6003F5B2195388D20070C39A /* UIKit.framework in Frameworks */,
 				6003F5B1195388D20070C39A /* Foundation.framework in Frameworks */,
-				7F7F936471BF5F8D3005AE41 /* Pods_Rudder_Adobe_Tests.framework in Frameworks */,
+				58F34C90124B403F935D2E0F /* libPods-Rudder-Adobe_Tests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +91,8 @@
 		6003F581195388D10070C39A = {
 			isa = PBXGroup;
 			children = (
+				8C957F40267B61F600ADB9B7 /* ADBMobileConfig.json */,
+				8C957F28267B4CC900ADB9B7 /* libs */,
 				60FF7A9C1954A5C5007DD14C /* Podspec Metadata */,
 				6003F593195388D20070C39A /* Example for Rudder-Adobe */,
 				6003F5B5195388D20070C39A /* Tests */,
@@ -120,11 +115,8 @@
 			isa = PBXGroup;
 			children = (
 				6003F58D195388D20070C39A /* Foundation.framework */,
-				6003F58F195388D20070C39A /* CoreGraphics.framework */,
-				6003F591195388D20070C39A /* UIKit.framework */,
-				6003F5AF195388D20070C39A /* XCTest.framework */,
-				43337BD6B6DE153511771809 /* Pods_Rudder_Adobe_Example.framework */,
-				459B447B31E699824A7A58E3 /* Pods_Rudder_Adobe_Tests.framework */,
+				82574D7A8D8494096B3DB776 /* libPods-Rudder-Adobe_Example.a */,
+				C850E2310FF876E27E512DA3 /* libPods-Rudder-Adobe_Tests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -185,6 +177,16 @@
 			name = "Podspec Metadata";
 			sourceTree = "<group>";
 		};
+		8C957F28267B4CC900ADB9B7 /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				8C957F29267B4CC900ADB9B7 /* MediaSDK.xcframework */,
+				8C957F2A267B4CC900ADB9B7 /* MediaSDKTV.xcframework */,
+			);
+			name = libs;
+			path = "../../media-sdks-ios-v2.3.0/sdks/iOS/libs";
+			sourceTree = "<group>";
+		};
 		CBAE0E9FA4D4E006016F7E8A /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -207,7 +209,6 @@
 				6003F586195388D20070C39A /* Sources */,
 				6003F587195388D20070C39A /* Frameworks */,
 				6003F588195388D20070C39A /* Resources */,
-				6F039E1F065572B46C588544 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -281,6 +282,7 @@
 				71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */,
 				6003F5A9195388D20070C39A /* Images.xcassets in Resources */,
 				6003F598195388D20070C39A /* InfoPlist.strings in Resources */,
+				8C957F41267B61F600ADB9B7 /* ADBMobileConfig.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,24 +297,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		6F039E1F065572B46C588544 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Rudder-Adobe_Example/Pods-Rudder-Adobe_Example-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/Rudder/Rudder.framework",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Rudder.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Rudder-Adobe_Example/Pods-Rudder-Adobe_Example-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		937EE2A857F0163392293FEE /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -494,9 +478,31 @@
 			baseConfigurationReference = 831BC2F8BAD46139600554C0 /* Pods-Rudder-Adobe_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/AdobeMediaSDK\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/AdobeMobileSDK\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Rudder\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Rudder-Adobe\"",
+					"\"${PODS_ROOT}/AdobeMediaSDK\"",
+					"\"${PODS_ROOT}/AdobeMobileSDK/AdobeMobileLibrary\"",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Rudder-Adobe/Rudder-Adobe-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/AdobeMediaSDK/AdobeMediaSDK.framework/Headers\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/AdobeMobileSDK/AdobeMobileSDK.framework/Headers\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Rudder-Adobe/Rudder_Adobe.framework/Headers\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Rudder/Rudder.framework/Headers\"",
+					"\"${PODS_XCFRAMEWORKS_BUILD_DIR}/AdobeMobile/Headers\"",
+					"\"${PODS_XCFRAMEWORKS_BUILD_DIR}/MediaSDK/Headers\"",
+					"\"$(SRCROOT)/Pods\"",
+					"$(SRCROOT)/Pods",
+				);
 				INFOPLIST_FILE = "Rudder-Adobe/Rudder-Adobe-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MODULE_NAME = ExampleApp;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -510,9 +516,31 @@
 			baseConfigurationReference = 0B7A8ECE86964C498D1DAD44 /* Pods-Rudder-Adobe_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/AdobeMediaSDK\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/AdobeMobileSDK\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Rudder\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Rudder-Adobe\"",
+					"\"${PODS_ROOT}/AdobeMediaSDK\"",
+					"\"${PODS_ROOT}/AdobeMobileSDK/AdobeMobileLibrary\"",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Rudder-Adobe/Rudder-Adobe-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/AdobeMediaSDK/AdobeMediaSDK.framework/Headers\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/AdobeMobileSDK/AdobeMobileSDK.framework/Headers\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Rudder-Adobe/Rudder_Adobe.framework/Headers\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Rudder/Rudder.framework/Headers\"",
+					"\"${PODS_XCFRAMEWORKS_BUILD_DIR}/AdobeMobile/Headers\"",
+					"\"${PODS_XCFRAMEWORKS_BUILD_DIR}/MediaSDK/Headers\"",
+					"\"$(SRCROOT)/Pods\"",
+					"$(SRCROOT)/Pods",
+				);
 				INFOPLIST_FILE = "Rudder-Adobe/Rudder-Adobe-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MODULE_NAME = ExampleApp;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";

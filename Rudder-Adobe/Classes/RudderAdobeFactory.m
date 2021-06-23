@@ -7,6 +7,9 @@
 
 #import "RudderAdobeFactory.h"
 #import "RudderAdobeIntegration.h"
+//#import <AdobeMediaSDK/ADBMediaHeartbeatConfig.h>
+//#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
+//#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
 
 @implementation RudderAdobeFactory
 
@@ -25,9 +28,17 @@ static RudderAdobeFactory *sharedInstance;
 }
 
 -(id<RSIntegration>)initiate:(NSDictionary *)config client:(RSClient *)client rudderConfig:(RSConfig *)rudderConfig{
+    
+//    id<SEGADBMediaObjectFactory> mediaObjectFactory = [[SEGRealADBMediaObjectFactory alloc] init];
+//    id<SEGADBMediaHeartbeatFactory> mediaHeartbeatFactory = [[SEGRealADBMediaHeartbeatFactory alloc] init];
+    id adobeMobile = [ADBMobile class];
+//    id config = [[ADBMediaHeartbeatConfig alloc] init];
+//    id<SEGPlaybackDelegateFactory> delegateFactory = [[SEGRealPlaybackDelegateFactory alloc] init];
+    
     [RSLogger logDebug:@"Creating RudderIntegrationFactory: Adobe"];
     return [[RudderAdobeIntegration alloc] initWithConfig:config
                                                 withAnalytics:client
-                                             withRudderConfig:rudderConfig];
+                                             withRudderConfig:rudderConfig
+                                                    adobe:adobeMobile];
 }
 @end
