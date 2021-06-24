@@ -7,9 +7,8 @@
 
 #import "RudderAdobeFactory.h"
 #import "RudderAdobeIntegration.h"
-//#import <AdobeMediaSDK/ADBMediaHeartbeatConfig.h>
-//#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
-//#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
+#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
+#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
 
 @implementation RudderAdobeFactory
 
@@ -29,16 +28,22 @@ static RudderAdobeFactory *sharedInstance;
 
 -(id<RSIntegration>)initiate:(NSDictionary *)config client:(RSClient *)client rudderConfig:(RSConfig *)rudderConfig{
     
-//    id<SEGADBMediaObjectFactory> mediaObjectFactory = [[SEGRealADBMediaObjectFactory alloc] init];
-//    id<SEGADBMediaHeartbeatFactory> mediaHeartbeatFactory = [[SEGRealADBMediaHeartbeatFactory alloc] init];
-    id adobeMobile = [ADBMobile class];
-//    id config = [[ADBMediaHeartbeatConfig alloc] init];
-//    id<SEGPlaybackDelegateFactory> delegateFactory = [[SEGRealPlaybackDelegateFactory alloc] init];
+    id adobeMobileClass = [ADBMobile class];
+    id heartbeatConfig = [[ADBMediaHeartbeatConfig alloc] init];
+    id<RSADBMediaObjectFactory> mediaObjectFactory = [[RSRealADBMediaObjectFactory alloc] init];
+    id<RSADBMediaHeartbeatFactory> mediaHeartbeatFactory = [[RSRealADBMediaHeartbeatFactory alloc] init];
+    id<RSPlaybackDelegateFactory> delegateFactory = [[RSRealPlaybackDelegateFactory alloc] init];
+
     
     [RSLogger logDebug:@"Creating RudderIntegrationFactory: Adobe"];
     return [[RudderAdobeIntegration alloc] initWithConfig:config
-                                                withAnalytics:client
-                                             withRudderConfig:rudderConfig
-                                                    adobe:adobeMobile];
+                                            withAnalytics:client
+                                         withRudderConfig:rudderConfig
+                                                    adobe:adobeMobileClass
+                                 andMediaHeartbeatFactory:(id<RSADBMediaHeartbeatFactory> _Nullable)mediaHeartbeatFactory
+                                  andMediaHeartbeatConfig:(ADBMediaHeartbeatConfig *_Nullable)heartbeatConfig
+                                    andMediaObjectFactory:(id<RSADBMediaObjectFactory> _Nullable)mediaObjectFactory
+                                  andPlaybackDelegateFactory:(id<RSPlaybackDelegateFactory> _Nullable)delegateFactory
+            ];
 }
 @end

@@ -144,10 +144,10 @@
 //                                  @"custom_2" : @6345,
 //                              }];
 //
-//    [[RSClient sharedInstance] track:@"myapp.ActionName"
-//                              properties:@{
-//                                  @"custom_2" : @72345,
-//                              }];
+    [[RSClient sharedInstance] track:@"myapp.ActionName"
+                              properties:@{
+                                  @"custom_2" : @72345,
+                              }];
 //
 //    [[RSClient sharedInstance] screen:@"screen_call"
 //                                  properties:@{
@@ -245,11 +245,3 @@
 }
 
 @end
-
-
-/*
- 
- Rudder-Adobe_Example[26725:4783087] ADBMobile Debug: Analytics - Successfully sent hit(ndh=1&t=00%2F00%2F0000%2000%3A00%3A00%200%20-330&c.&orderId=1001&products=%7B%0A%20%20%20%20category%20%3D%2011Cloths%3B%0A%20%20%20%20name%20%3D%2011Shirt%3B%0A%20%20%20%20price%20%3D%20101%3B%0A%20%20%20%20productId%20%3D%20100001%3B%0A%20%20%20%20quantity%20%3D%2011%3B%0A%7D%2C%7B%0A%20%20%20%20category%20%3D%2012Cloths%3B%0A%20%20%20%20name%20%3D%2012shirt%3B%0A%20%20%20%20price%20%3D%20102%3B%0A%20%20%20%20%22product_id%22%20%3D%20100002%3B%0A%20%20%20%20quantity%20%3D%2012%3B%0A%7D&custom_2=1345&revenue=1001&custom_1=1custom&a.&action=myapp.ActionName&OSVersion=iOS%2014.5&DeviceName=x86_64&RunMode=Application&AppID=Rudder-Adobe_Example%201.0%20%281.0%29&CarrierName=%28null%29&Resolution=1170x2532&TimeSinceLaunch=5&.a&currency=USD&.c&mid=52105007788800746111447584121836330116&pev2=AMACTION%3Amyapp.ActionName&ts=1624449697&pageName=Rudder-Adobe_Example%2F1.0&vid=iOS_user&pe=lnk_o&ce=UTF-8&cp=foreground)
- 
- 
- */
