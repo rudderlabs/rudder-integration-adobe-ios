@@ -144,9 +144,9 @@
 //                                  @"custom_2" : @6345,
 //                              }];
 //
-    [[RSClient sharedInstance] track:@"myapp.ActionName"
+    [[RSClient sharedInstance] track:@"Custom Track"
                               properties:@{
-                                  @"custom_2" : @72345,
+                                  @"custom_2" : @72345
                               }];
 //
 //    [[RSClient sharedInstance] screen:@"screen_call"

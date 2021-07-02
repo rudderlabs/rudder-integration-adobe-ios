@@ -11,8 +11,8 @@
 #import <AdobeMobileSDK/ADBMobile.h>
 
 #import <ADBMediaHeartbeat.h>
-#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
-#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
+//#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
+//#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
 
 //#if defined(__has_include) && __has_include(<Rudder/RSAnalytics.h>)
 //#import <Rudder/RSIntegration.h>
@@ -252,6 +252,7 @@ static NSDictionary *adobeVideoEvents;
         
         self.trackingServerUrl = [config objectForKey:@"heartbeatTrackingServerUrl"];
         self.ssl = [[config objectForKey:@"sslHeartbeat"] boolValue];
+        self.isTrackLifecycleEvents = rudderConfig.trackLifecycleEvents;
         self.videoEvents = [config objectForKey:@"eventsToTypes"];
         
         self.heartbeatFactory = ADBMediaHeartbeatFactory;
@@ -295,51 +296,61 @@ static NSDictionary *adobeVideoEvents;
         // do for track
         if (message.event)
         {
-            NSString* eventName = [message.event lowercaseString];
+            NSString* eventName = message.event;
+            
+            // If it is Video event
+            if (adobeVideoEvents[eventName]) {
+                [self trackHeartbeatEvents:message];
+                return;
+            }
+            
             // If it is E-Commerce event
-            if (adobeEcommerceEvents[eventName])
+            if (adobeEcommerceEvents[[eventName lowercaseString]])
             {
+                NSDictionary *rudderEventsToAdobeEvents = [self rudderEventsToAdobeEvents];
+                if (!rudderEventsToAdobeEvents
+                    && rudderEventsToAdobeEvents[eventName]) {
+                    [RSLogger logDebug:@"Rudderstack currently does not support mapping of ecommerce events to custom Adobe events."];
+                    return;
+                }
                 NSMutableDictionary<NSString*, NSObject*>* eventProperties = [message.properties mutableCopy];
                 NSDictionary *contextData = [self mapProducts: adobeEcommerceEvents[eventName] andProperties: eventProperties andContext:message.context andMessage: message];
                 [self.adobeMobile trackAction:adobeEcommerceEvents[eventName] data:contextData];
                 return;
             }
             
-            // If Video Event
-            if (adobeVideoEvents[eventName]) {
-                [self trackHeartbeatEvents:message];
+            if([self isTrackLifecycleEvents] && isTrackLifecycleEvents(eventName)) {
+                [self.adobeMobile trackAction:message.event data:nil];
                 return;
             }
             
             // Custom Track event
-            eventName = [self mappedEvents:eventName];
+//            eventName = [self mappedEvents:eventName];
             
-            // Check : Segment has implemented this way.
-            // But there is one issue, "Application Opened" or other kind of events
-            // which are not mapped to our dashboard, that event will never reach Adobe.
-            // Same is implemented for Android.
-            // So should we be implementing the same way??
-            
-            // My thought is that we should check if event is mapped or not.
-            // If not then we should simply send that event insetad of rejecting it!
-            if (!eventName) {
-                [RSLogger logVerbose:@"Event must be configured in Adobe and in the 'Map Rudder Events to Adobe Custom Eevnts' setting in Rudderstack before sending."];
+            if (![self rudderEventsToAdobeEvents]
+                || [[self rudderEventsToAdobeEvents] count] == 0
+                || !self.rudderEventsToAdobeEvents[eventName])
+            {
+                [RSLogger logVerbose:@"Event must be either configured in Adobe and in the Rudderstack setting, or it should be a reserved Adobe Ecommerce or Video event."];
                 return;
             }
             NSMutableDictionary *eventProperties = [message.properties mutableCopy];
             NSMutableDictionary *topLevelProperties = [self extractTrackTopLevelProps:message];
             NSMutableDictionary *contextData = [self mapContextValues:eventProperties andContext:message.context withTopLevelProps:topLevelProperties];
             // Handling extra eventProperties
-            if ([eventProperties count] > 0) {
-                for (NSString *key in eventProperties) {
-                    NSString *variable = [self.contextDataPrefix stringByAppendingString:eventProperties[key]];
-                    [contextData setObject:variable forKey:key];
-                }
-                // Check : (Repeated) - Removing all objects at once, as it is throwing an error:
-                // "NSMutable dictionary was mutated while being enumerated"
-                [eventProperties removeAllObjects];
-            }
+//            if ([eventProperties count] > 0) {
+//                for (NSString *key in eventProperties) {
+//                    NSString *variable = [self.contextDataPrefix stringByAppendingString:eventProperties[key]];
+//                    [contextData setObject:variable forKey:key];
+//                }
+//                // Check : (Repeated) - Removing all objects at once, as it is throwing an error:
+//                // Error: "NSMutable dictionary was mutated while being enumerated"
+//                [eventProperties removeAllObjects];
+//            }
             eventName = message.event;
+            NSMutableDictionary *extraProperties = [self extraProperties:eventProperties];
+//            [contextData dictionaryWithDictionary:extraProperties];
+            [contextData addEntriesFromDictionary:extraProperties];
             [self.adobeMobile trackAction:eventName data:contextData];
         }
     }else if ([type isEqualToString:@"screen"]){
@@ -354,6 +365,7 @@ static NSDictionary *adobeVideoEvents;
             }
             // Check : (Repeated) - Removing all objects at once, as it is throwing an error:
             // "NSMutable dictionary was mutated while being enumerated"
+//           Don't remove it
             [eventProperties removeAllObjects];
         }
         [self.adobeMobile trackState:message.event data:contextData];
@@ -369,6 +381,28 @@ static NSDictionary *adobeVideoEvents;
         [RSLogger logDebug:@"Adobe Integration: Message type not supported"];
     }
 
+}
+
+// Handle extraProperties
+-(NSMutableDictionary *) extraProperties:(NSMutableDictionary *)eventProperties {
+    NSMutableDictionary *contextData = [NSMutableDictionary alloc];
+    if ([eventProperties count] > 0) {
+        for (NSString *key in eventProperties) {
+            NSString *variable = [self.contextDataPrefix stringByAppendingString:eventProperties[key]];
+            [contextData setObject:variable forKey:key];
+        }
+        // Check : (Repeated) - Removing all objects at once, as it is throwing an error:
+        // Error: "NSMutable dictionary was mutated while being enumerated"
+        [eventProperties removeAllObjects];
+    }
+    return contextData;
+}
+
+BOOL isTrackLifecycleEvents(NSString *eventName)
+{
+    NSSet *trackLifecycleEvents = [NSSet setWithArray:@[ @"Application Installed", @"Application Updated", @"Application Opened", @"Application Backgrounded"]];
+    
+    return [trackLifecycleEvents containsObject:eventName];
 }
 
 - (NSString *)mappedEvents:(NSString *)eventName
@@ -404,6 +438,8 @@ BOOL isBoolean(NSObject* object){
 }
 
 -(NSDictionary<NSString *, NSObject *> *) contextMap:(RSContext *)context withKey:(NSString *) key{
+    
+    // Improve : getContextPropertykey
     
     if ([key isEqualToString:@"app"]) {
         return context.app.dict;
@@ -448,6 +484,9 @@ BOOL isBoolean(NSObject* object){
     if ([key isEqualToString:@"timezone"]) {
         NSMutableDictionary<NSString *, id> *contextData = [NSMutableDictionary<NSString *, id> dictionary];
         [contextData setObject:context.timezone forKey: @"timezone"];
+//        NSMutableDictionary<NSString *, id> *contextData2 = [NSMutableDictionary<NSString *, id> dictionary];
+//        [contextData2 setObject:context.timezone forKey: @"timezone"];
+//        [contextData addEntriesFromDictionary:contextData2];
         return contextData;
     }
     
@@ -480,7 +519,9 @@ BOOL isBoolean(NSObject* object){
             // Determine whether to check the properties or context object based on the key location
             if (eventProperties[key]) {
                 payloadLocation = [NSDictionary dictionaryWithDictionary:eventProperties];
-                // Check : If mapping is found then remove that key from the evntProperties payload
+                // Check : If mapping is found then remove that key from the eventProperties payload
+                // this will be beneficial while extracting extraProperties.
+                // (Segment is not taking care of extraProperties
                 [eventProperties removeObjectForKey:key];
             }
             // Check : For "userAgent" value is nil, means it is not being set in RSContext, What should we do!
@@ -488,7 +529,6 @@ BOOL isBoolean(NSObject* object){
             if ([predefinedContextKeys containsObject:key]) {
                 payloadLocation = [self contextMap:context withKey:key];
             }
-//            NSMutableDictionary *val2 = [payloadLocation mutableCopy];
             if (payloadLocation) {
                 if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@YES]){
                    [data setObject:@"true" forKey:contextValues[key]];
@@ -502,8 +542,10 @@ BOOL isBoolean(NSObject* object){
             // Check : Review and edit the comment properly
             // For screen and track calls our core analytics-ios lib exposes these top level properties
             // These properties are extractetd from the  payload using helper methods (extractSEGTrackTopLevelProps & extractSEGScreenTopLevelProps)
+            
             // Check : We should remove "name", as it is not present inside our specification.
             // Although Segment has implemented it.
+            // Remove name then.
             NSArray *topLevelProperties = @[@"event", @"messageId", @"anonymousId", @"name"];
             if ([topLevelProperties containsObject:key] && topLevelProps[key]) {
                 [data setObject:topLevelProps[key] forKey:contextValues[key]];
@@ -556,6 +598,7 @@ BOOL isBoolean(NSObject* object){
         // Check : If user sends evenrything except product_id or name
         // then formattedProducts will be null
         // In that case also, we should remove all the product variables?
+        // (Segment hasn't implemented this way, as they're not taking care of extraProperties)
         [eventProperties removeObjectForKey:@"category"];
         [eventProperties removeObjectForKey:@"quantity"];
         [eventProperties removeObjectForKey:@"price"];
@@ -572,9 +615,9 @@ BOOL isBoolean(NSObject* object){
     
     
     // Check : Extra properties & custom data prefix both are not handled by Segment,
-    // Implementing that -> If needed we could remove it.
+    // Implementing that -> If needed we could remove it. (If removed -> then we should remove the code which deletes the key from eventProperties)
+    
     // Check : Handling extraProperties, which is not handled by Segment
-//    NSMutableDictionary * contextData2 = [[NSMutableDictionary alloc] initWithDictionary:data];
     // Handling extra eventProperties
     if ([eventProperties count] > 0) {
         for (NSString *key in eventProperties) {
@@ -587,6 +630,8 @@ BOOL isBoolean(NSObject* object){
     }
     
     // Check : Is it possible product is empty for any E-Commerce events e.g., Order Completed (Purchase) event!
+    // What Segment has done -> they're simply putting the product at the payload,
+    // so if it is empty then it'll create issue
     if ([formattedProducts length] > 0) {
         [contextData setObject:formattedProducts forKey:@"&&products"];
     }
@@ -647,7 +692,7 @@ BOOL isBoolean(NSObject* object){
     // This value can be 'name', 'sku', or 'id'. Defaults to name
     NSString *productIdentifier = product[_productIdentifier];
     
-    // Check : for v1 at segment implementation
+    // Check : for v1 at segment implementation. What should we write instead of V! or V2?
     // Fallback to id. Rudderstack ecommerce Spec'd `id` as the product identifier
     // The setting productIdentifier checks for id, where ecommerce V2
     // is expecting product_id.
@@ -655,21 +700,21 @@ BOOL isBoolean(NSObject* object){
         productIdentifier = product[@"product_id"] ?: product[@"id"];
         // Check : I've added a corner case (which is not handled by Segment),
         // i.e., if product_id value is integer then it's length cannott be determined.
-        // Should we remove the logger comment??
         if (productIdentifier) {
             productIdentifier = [[NSString alloc] initWithFormat:@"%@",productIdentifier];
         }
     }
     
-    
+    // Check : Should we remove the logger comment and simply return?
+    // There strategies is that Product variable must be present etc.
     if ([productIdentifier length] == 0) {
         [RSLogger logDebug:@"Product is a required field."];
         return nil;
     }
     
     // Check : If user doesn't set price then by defualt price is set to zero.
-    // Which I think is not the ideal case to be, it must be removed
-    // Segment has implemented in this way, so should I proceed with Segment!
+    // Which I think is not the ideal case to be, if user
+    // (Segment has implemented in this way), so should I proceed with Segment!
     
     // Adobe expects Price to refer to the total price (unit price x units).
     int quantity = [product[@"quantity"] intValue] ?: 1;
@@ -689,9 +734,9 @@ BOOL isBoolean(NSObject* object){
         NSString *emptyQuantity = @"";
         output = @[ category, productIdentifier, emptyQuantity, [NSNumber numberWithDouble:total] ];
     }
-    else if (!productIdentifier){
-        return nil;
-    }
+//    else if (!productIdentifier){
+//        return nil;
+//    }
     else {
         output = @[ category, productIdentifier];
     }
