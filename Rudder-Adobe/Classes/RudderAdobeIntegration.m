@@ -3,31 +3,14 @@
 //
 //  Created by Desu Sai Venkat on 16/06/2021.
 //  Copyright (c) 2021 Desu Sai Venkat. All rights reserved.
-//
 
 #import "RudderAdobeIntegration.h"
 #import <Rudder/Rudder.h>
 
 #import <AdobeMobileSDK/ADBMobile.h>
-
 #import <ADBMediaHeartbeat.h>
-//#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
-//#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
-
-//#if defined(__has_include) && __has_include(<Rudder/RSAnalytics.h>)
-//#import <Rudder/RSIntegration.h>
-//#import <Rudder/RSAnalyticsUtils.h>
-//#import <Rudder/RSAnalytics.h>
-//#else
-//#import <Rudder/RSIntegration.h>
-////#import <Rudder/RSAnalyticsUtils.h>
-//#import <Rudder/RSAnalytics.h>
-//#endif
 
 static NSDictionary *adobeEcommerceEvents;
-static NSDictionary *adobeVideoEvents;
-
-
 
 @interface RSPlaybackDelegate(Private)<ADBMediaHeartbeatDelegate>
 @end
@@ -173,14 +156,21 @@ static NSDictionary *adobeVideoEvents;
  */
 - (ADBMediaObject *_Nullable)createWithProperties:(NSDictionary *_Nullable)properties andEventType:(NSString *_Nullable)eventType;
 {
-    NSString *videoName = properties[@"title"];
-    NSString *mediaId = properties[@"content_asset_id"];
-    double length = [properties[@"total_length"] doubleValue];
-    NSString *adId = properties[@"asset_id"];
+    NSString *videoName = properties[@"title"] ?: @"no title";
+    NSString *mediaId = properties[@"asset_id"] ?: properties[@"assetId"];
+    double length = [properties[@"total_length"] doubleValue] ?: [properties[@"totalLength"] doubleValue];
+    // Check : During test -> Is length is nil anytime
+    if (!length) {
+        length = 0;
+    }
+    NSString *adId = properties[@"asset_id"] ?: properties[@"asset_id"];
 
-    // TODO: not spec'd, follow up with spec committee proposal
-    double startTime = [properties[@"start_time"] doubleValue];
-    double position = [properties[@"indexPosition"] doubleValue];
+    double startTime = [properties[@"start_time"] doubleValue] ?: [properties[@"startTime"] doubleValue];
+    if (!startTime) {
+        startTime = 0;
+    }
+    double position = [properties[@"position"] doubleValue] ?: 1;
+    
 
     // Adobe also has a third type: linear, which we have chosen
     // to omit as it does not conform to Segment's Video spec
@@ -196,6 +186,9 @@ static NSDictionary *adobeVideoEvents;
                                                      length:length
                                                  streamType:streamType];
     } else if ([eventType isEqualToString:@"Content"]) {
+        // Set the default length value in case if it is not initialised
+        // Refer to https://docs.rudderstack.com/destinations/analytics/adobe-analytics/adobe-analytics-heartbeat#heartbeat-video-start
+        length = [properties[@"total_length"] doubleValue] ?: 6000;
         return [ADBMediaHeartbeat createChapterObjectWithName:videoName
                                                      position:position
                                                        length:length
@@ -253,20 +246,23 @@ static NSDictionary *adobeVideoEvents;
         self.trackingServerUrl = [config objectForKey:@"heartbeatTrackingServerUrl"];
         self.ssl = [[config objectForKey:@"sslHeartbeat"] boolValue];
         self.isTrackLifecycleEvents = rudderConfig.trackLifecycleEvents;
-        self.videoEvents = [config objectForKey:@"eventsToTypes"];
+        
+        self.videoEvents = [NSDictionary dictionaryWithObjects:[[config objectForKey:@"eventsToTypes"] valueForKey:@"to"]
+                                                       forKeys:[[config objectForKey:@"eventsToTypes"] valueForKey:@"from"]];
         
         self.heartbeatFactory = ADBMediaHeartbeatFactory;
         self.objectFactory = ADBMediaObjectFactory;
         self.heartbeatConfig = ADBMediaHeartbeatConfig;
         self.delegateFactory = delegateFactory;
-        
+        self.videoDebug = FALSE;
         [self setAdobeEcommerceEvents];
-        [self setAdobeVideoEvents];
     }
     // Check : Remove the below debug statement
     [self.adobeMobile setDebugLogging:TRUE];
+    self.videoDebug = TRUE;
     if(rudderConfig.logLevel == RSLogLevelVerbose) {
         [self.adobeMobile setDebugLogging:TRUE];
+        self.videoDebug = TRUE;
     }
 //    [self.adobeMobile collectLifecycleData];
     
@@ -299,7 +295,7 @@ static NSDictionary *adobeVideoEvents;
             NSString* eventName = message.event;
             
             // If it is Video event
-            if (adobeVideoEvents[eventName]) {
+            if (self.videoEvents[eventName]) {
                 [self trackHeartbeatEvents:message];
                 return;
             }
@@ -307,28 +303,25 @@ static NSDictionary *adobeVideoEvents;
             // If it is E-Commerce event
             if (adobeEcommerceEvents[[eventName lowercaseString]])
             {
-                NSDictionary *rudderEventsToAdobeEvents = [self rudderEventsToAdobeEvents];
-                if (!rudderEventsToAdobeEvents
-                    && rudderEventsToAdobeEvents[eventName]) {
+                if (!self.rudderEventsToAdobeEvents
+                    && self.rudderEventsToAdobeEvents[eventName]) {
                     [RSLogger logDebug:@"Rudderstack currently does not support mapping of ecommerce events to custom Adobe events."];
                     return;
                 }
-                NSMutableDictionary<NSString*, NSObject*>* eventProperties = [message.properties mutableCopy];
-                NSDictionary *contextData = [self mapProducts: adobeEcommerceEvents[eventName] andProperties: eventProperties andContext:message.context andMessage: message];
-                [self.adobeMobile trackAction:adobeEcommerceEvents[eventName] data:contextData];
+//                NSMutableDictionary<NSString*, NSObject*>* eventProperties = [message.properties mutableCopy];
+//                NSDictionary *contextData =
+                [self handleEcommerce:adobeEcommerceEvents[[eventName lowercaseString]] andMessage: message];
                 return;
             }
             
             if([self isTrackLifecycleEvents] && isTrackLifecycleEvents(eventName)) {
-                [self.adobeMobile trackAction:message.event data:nil];
+                [self.adobeMobile trackAction:eventName data:nil];
                 return;
             }
             
             // Custom Track event
-//            eventName = [self mappedEvents:eventName];
-            
-            if (![self rudderEventsToAdobeEvents]
-                || [[self rudderEventsToAdobeEvents] count] == 0
+            if (!self.rudderEventsToAdobeEvents
+                || [self.rudderEventsToAdobeEvents count] == 0
                 || !self.rudderEventsToAdobeEvents[eventName])
             {
                 [RSLogger logVerbose:@"Event must be either configured in Adobe and in the Rudderstack setting, or it should be a reserved Adobe Ecommerce or Video event."];
@@ -336,38 +329,18 @@ static NSDictionary *adobeVideoEvents;
             }
             NSMutableDictionary *eventProperties = [message.properties mutableCopy];
             NSMutableDictionary *topLevelProperties = [self extractTrackTopLevelProps:message];
-            NSMutableDictionary *contextData = [self mapContextValues:eventProperties andContext:message.context withTopLevelProps:topLevelProperties];
-            // Handling extra eventProperties
-//            if ([eventProperties count] > 0) {
-//                for (NSString *key in eventProperties) {
-//                    NSString *variable = [self.contextDataPrefix stringByAppendingString:eventProperties[key]];
-//                    [contextData setObject:variable forKey:key];
-//                }
-//                // Check : (Repeated) - Removing all objects at once, as it is throwing an error:
-//                // Error: "NSMutable dictionary was mutated while being enumerated"
-//                [eventProperties removeAllObjects];
-//            }
-            eventName = message.event;
-            NSMutableDictionary *extraProperties = [self extraProperties:eventProperties];
-//            [contextData dictionaryWithDictionary:extraProperties];
-            [contextData addEntriesFromDictionary:extraProperties];
+            NSMutableDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andContext:message.context withTopLevelProps:topLevelProperties];
+            if (!contextData) {
+                contextData = [[NSMutableDictionary alloc] init];
+            }
+            eventName = [self getString:self.rudderEventsToAdobeEvents[eventName]];
             [self.adobeMobile trackAction:eventName data:contextData];
         }
-    }else if ([type isEqualToString:@"screen"]){
+    }
+    else if ([type isEqualToString:@"screen"]){
         NSMutableDictionary *eventProperties = [message.properties mutableCopy];
         NSMutableDictionary *topLevelProperties = [self extractTrackTopLevelProps:message];
-        NSMutableDictionary *contextData = [self mapContextValues:eventProperties andContext:message.context withTopLevelProps:topLevelProperties];
-        // Handling extra eventProperties
-        if ([eventProperties count] > 0) {
-            for (NSString *key in eventProperties) {
-                NSString *variable = [self.contextDataPrefix stringByAppendingString:eventProperties[key]];
-                [contextData setObject:variable forKey:key];
-            }
-            // Check : (Repeated) - Removing all objects at once, as it is throwing an error:
-            // "NSMutable dictionary was mutated while being enumerated"
-//           Don't remove it
-            [eventProperties removeAllObjects];
-        }
+        NSMutableDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andContext:message.context withTopLevelProps:topLevelProperties];
         [self.adobeMobile trackState:message.event data:contextData];
 
     }
@@ -383,19 +356,11 @@ static NSDictionary *adobeVideoEvents;
 
 }
 
-// Handle extraProperties
--(NSMutableDictionary *) extraProperties:(NSMutableDictionary *)eventProperties {
-    NSMutableDictionary *contextData = [NSMutableDictionary alloc];
-    if ([eventProperties count] > 0) {
-        for (NSString *key in eventProperties) {
-            NSString *variable = [self.contextDataPrefix stringByAppendingString:eventProperties[key]];
-            [contextData setObject:variable forKey:key];
-        }
-        // Check : (Repeated) - Removing all objects at once, as it is throwing an error:
-        // Error: "NSMutable dictionary was mutated while being enumerated"
-        [eventProperties removeAllObjects];
+-(NSString *) getString:(NSObject *) value {
+    if (!value) {
+        return nil;
     }
-    return contextData;
+    return [NSString stringWithFormat:@"%@", value];
 }
 
 BOOL isTrackLifecycleEvents(NSString *eventName)
@@ -426,7 +391,7 @@ BOOL isTrackLifecycleEvents(NSString *eventName)
 }
 
 -(NSMutableDictionary *) extractTrackTopLevelProps:(RSMessage *) message {
-    NSMutableDictionary *topLevelProperties = [[NSMutableDictionary alloc] initWithCapacity:10];
+    NSMutableDictionary *topLevelProperties = [[NSMutableDictionary alloc] initWithCapacity:3];
     [topLevelProperties setValue:message.messageId forKey:@"messageId"];
     [topLevelProperties setValue:message.event forKey:@"event"];
     [topLevelProperties setValue:message.anonymousId forKey:@"anonymousId"];
@@ -437,10 +402,8 @@ BOOL isBoolean(NSObject* object){
     return (object == (void*)kCFBooleanFalse || object == (void*)kCFBooleanTrue);
 }
 
--(NSDictionary<NSString *, NSObject *> *) contextMap:(RSContext *)context withKey:(NSString *) key{
-    
-    // Improve : getContextPropertykey
-    
+-(NSDictionary<NSString *, NSObject *> *) getContextPropertykey:(RSContext *)context withKey:(NSString *) key{
+
     if ([key isEqualToString:@"app"]) {
         return context.app.dict;
     }
@@ -493,11 +456,12 @@ BOOL isBoolean(NSObject* object){
     return nil;
 }
 
--(NSMutableDictionary *) mapContextValues:(NSMutableDictionary *)eventProperties andContext:(RSContext *)context withTopLevelProps:(NSMutableDictionary *)topLevelProps {
+-(NSMutableDictionary *) getCustomMappedAndExtraProperties:(NSMutableDictionary *)eventProperties
+                                                andContext:(RSContext *)context
+                                         withTopLevelProps:(NSMutableDictionary *)topLevelProps {
     NSInteger contextValuesSize = [self.contextData count];
-//    NSDictionary *context1 = [self buildContextMap:context];
     if ([eventProperties count] > 0 && contextValuesSize > 0) {
-        NSMutableDictionary *data = [[NSMutableDictionary alloc] initWithCapacity:contextValuesSize];
+        NSMutableDictionary *cData = [[NSMutableDictionary alloc] initWithCapacity:contextValuesSize];
         NSDictionary *contextValues = self.contextData;
         for (NSString *key in contextValues) {
             if ([key containsString:@"."]) {
@@ -507,10 +471,10 @@ BOOL isBoolean(NSObject* object){
                 NSArray *predefinedContextKeys = @[ @"traits", @"app", @"device", @"library", @"os", @"network", @"screen"];
                 if ([predefinedContextKeys containsObject:arrayofKeyComponents[0]]) {
                     // If 'context' contains the first key, store it in contextTraits.
-                    NSDictionary<NSString *, NSObject *> *contextTraits = [self contextMap:context withKey:arrayofKeyComponents[0]];
+                    NSDictionary<NSString *, NSObject *> *contextTraits = [self getContextPropertykey:context withKey:arrayofKeyComponents[0]];
                     NSString *parsedKey = arrayofKeyComponents[1];
                     if([contextTraits count] && contextTraits[parsedKey]) {
-                        [data setObject:contextTraits[parsedKey] forKey:contextValues[key]];
+                        [cData setObject:contextTraits[parsedKey] forKey:contextValues[key]];
                     }
                 }
             }
@@ -519,53 +483,48 @@ BOOL isBoolean(NSObject* object){
             // Determine whether to check the properties or context object based on the key location
             if (eventProperties[key]) {
                 payloadLocation = [NSDictionary dictionaryWithDictionary:eventProperties];
-                // Check : If mapping is found then remove that key from the eventProperties payload
-                // this will be beneficial while extracting extraProperties.
-                // (Segment is not taking care of extraProperties
                 [eventProperties removeObjectForKey:key];
             }
-            // Check : For "userAgent" value is nil, means it is not being set in RSContext, What should we do!
             NSSet *predefinedContextKeys = [NSSet setWithArray:@[ @"traits", @"app", @"device", @"library",@"locale",@"timezone",@"userAgent", @"os", @"network", @"screen"]];
             if ([predefinedContextKeys containsObject:key]) {
-                payloadLocation = [self contextMap:context withKey:key];
+                payloadLocation = [self getContextPropertykey:context withKey:key];
             }
             if (payloadLocation) {
                 if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@YES]){
-                   [data setObject:@"true" forKey:contextValues[key]];
+                   [cData setObject:@"true" forKey:self.contextData[key]];
                 } else if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@NO]){
-                     [data setObject:@"false" forKey:contextValues[key]];
+                     [cData setObject:@"false" forKey:self.contextData[key]];
                 } else {
-                    [data setObject:payloadLocation[key] forKey:key];
+                    [cData setObject:payloadLocation[key] forKey:self.contextData[key]];
                 }
             }
             
-            // Check : Review and edit the comment properly
-            // For screen and track calls our core analytics-ios lib exposes these top level properties
-            // These properties are extractetd from the  payload using helper methods (extractSEGTrackTopLevelProps & extractSEGScreenTopLevelProps)
-            
-            // Check : We should remove "name", as it is not present inside our specification.
-            // Although Segment has implemented it.
-            // Remove name then.
-            NSArray *topLevelProperties = @[@"event", @"messageId", @"anonymousId", @"name"];
+            NSArray *topLevelProperties = @[@"event", @"messageId", @"anonymousId"];
             if ([topLevelProperties containsObject:key] && topLevelProps[key]) {
-                [data setObject:topLevelProps[key] forKey:contextValues[key]];
+                [cData setObject:topLevelProps[key] forKey:contextValues[key]];
             }
         }
-        if ([data count] > 0) return data;
+        
+        //Handle ExtraProperties
+        if ([eventProperties count] > 0) {
+            for (NSString *key in eventProperties) {
+                NSString *propertyName = [self.contextDataPrefix stringByAppendingString:key];
+                [cData setObject:[self getString:eventProperties[key]] forKey:propertyName];
+            }
+            [eventProperties removeAllObjects];
+        }
+        if ([cData count] > 0) return cData;
     }
-    
     
     return nil;
 }
 
--(NSMutableDictionary *) mapProducts:(NSString *)eventName andProperties:(NSMutableDictionary*) eventProperties andContext:(RSContext *)context andMessage: (nonnull RSMessage *) message {
-    if(![eventProperties count]) {
-        return nil;
-    }
-    
+-(void) handleEcommerce:(NSString *)eventName andMessage: (nonnull RSMessage *) message {
+    NSMutableDictionary* eventProperties = [message.properties mutableCopy];
+
     NSMutableDictionary *topLevelProperties = [self extractTrackTopLevelProps:message];
-    NSMutableDictionary *data = [self mapContextValues:eventProperties andContext:context withTopLevelProps:topLevelProperties];
-    NSMutableDictionary *contextData = [[NSMutableDictionary alloc] initWithDictionary:data];
+//    NSMutableDictionary *contextData = [[NSMutableDictionary alloc] initWithDictionary:data];
+    NSMutableDictionary *contextData = [[NSMutableDictionary alloc] init];
     
     // If you trigger a product-specific event by using the &&products variable,
     // you must also set that event in the &&events variable.
@@ -573,69 +532,70 @@ BOOL isBoolean(NSObject* object){
     [contextData setObject:eventName forKey:@"&&events"];
     
     // Handle Products
-    NSString *formattedProducts = @"";
-    NSMutableDictionary *products = eventProperties[@"products"];
-    [eventProperties removeObjectForKey:@"products"];
-    // If multiple products are present
-    if ([products isKindOfClass:[NSArray class]]) {
-        int count = 0;
-        for (NSDictionary *product  in products) {
-            NSString *productString = [self formatProduct:product];
-            // Catch the case where productIdentifier is nil
-            if (productString == nil) {
-                return nil;
-            }
-            formattedProducts = [formattedProducts stringByAppendingString:productString];
-            count++;
-            if (count < [products count]) {
-                formattedProducts = [formattedProducts stringByAppendingString:@","];
+    if (eventProperties) {
+        NSString *formattedProducts = @"";
+        // If multiple products are present
+        if (eventProperties[@"products"]){
+            NSMutableDictionary *products = [eventProperties objectForKey:@"products"];
+            [eventProperties removeObjectForKey:@"products"];
+            if ([products isKindOfClass:[NSArray class]]) {
+                for (NSDictionary *product  in products) {
+                    NSString *productString;
+                    @try {
+                        productString = [self formatProduct:product];
+                    }
+                    @catch (NSException *e) {
+                        [RSLogger logDebug:e.reason];
+                    }
+                    if ([formattedProducts length]) {
+                        formattedProducts = [formattedProducts stringByAppendingString:@","];
+                    }
+                    formattedProducts = [formattedProducts stringByAppendingString:productString];
+                }
             }
         }
-    }
-    // If product is present at the root level
-    else {
-        formattedProducts = [self formatProduct:eventProperties];
-        // Check : If user sends evenrything except product_id or name
-        // then formattedProducts will be null
-        // In that case also, we should remove all the product variables?
-        // (Segment hasn't implemented this way, as they're not taking care of extraProperties)
-        [eventProperties removeObjectForKey:@"category"];
-        [eventProperties removeObjectForKey:@"quantity"];
-        [eventProperties removeObjectForKey:@"price"];
+        // If product is present at the root level
+        else {
+            @try {
+                formattedProducts = [self formatProduct:eventProperties];
+                [eventProperties removeObjectForKey:@"category"];
+                [eventProperties removeObjectForKey:@"quantity"];
+                [eventProperties removeObjectForKey:@"price"];
+                if (!self.productIdentifier || [self.productIdentifier isEqualToString:@"id"] ) {
+                    [eventProperties removeObjectForKey:@"productId"];
+                    [eventProperties removeObjectForKey:@"product_id"];
+                    [eventProperties removeObjectForKey:@"id"];
+                } else {
+                    [eventProperties removeObjectForKey:self.productIdentifier];
+                }
+            } @catch (NSException *e) {
+                [RSLogger logDebug:e.name];
+            }
+        }
+        if ([formattedProducts length] > 0) {
+            [contextData setObject:formattedProducts forKey:@"&&products"];
+        }
         
-        NSString *idKey = [self productIdentifier];
-        if (idKey == nil || [idKey isEqualToString:@"id"] ) {
-            [eventProperties removeObjectForKey:@"productId"];
-            [eventProperties removeObjectForKey:@"product_id"];
-        } else {
-            [eventProperties removeObjectForKey:idKey];
+        if ([eventProperties count]){
+            if (eventProperties[@"order_id"]) {
+                [contextData setObject:eventProperties[@"order_id"] forKey:@"purchaseid"];
+                [eventProperties removeObjectForKey:@"order_id"];
+            } else if (eventProperties[@"orderId"]) {
+                [contextData setObject:eventProperties[@"orderId"] forKey:@"purchaseid"];
+                [eventProperties removeObjectForKey:@"orderId"];
+            }
         }
     }
     
-    
-    
-    // Check : Extra properties & custom data prefix both are not handled by Segment,
-    // Implementing that -> If needed we could remove it. (If removed -> then we should remove the code which deletes the key from eventProperties)
-    
-    // Check : Handling extraProperties, which is not handled by Segment
-    // Handling extra eventProperties
-    if ([eventProperties count] > 0) {
-        for (NSString *key in eventProperties) {
-            NSString *variable = [self.contextDataPrefix stringByAppendingString:eventProperties[key]];
-            [contextData setObject:variable forKey:key];
-        }
-        // Check : Removing all objects at once, as it is throwing an error:
-        // "NSMutable dictionary was mutated while being enumerated"
-        [eventProperties removeAllObjects];
+    NSMutableDictionary *data = [self getCustomMappedAndExtraProperties:eventProperties
+                                                             andContext:message.context
+                                                      withTopLevelProps:topLevelProperties];
+    if (data) {
+        [contextData addEntriesFromDictionary:data];
+        [data removeAllObjects];
     }
     
-    // Check : Is it possible product is empty for any E-Commerce events e.g., Order Completed (Purchase) event!
-    // What Segment has done -> they're simply putting the product at the payload,
-    // so if it is empty then it'll create issue
-    if ([formattedProducts length] > 0) {
-        [contextData setObject:formattedProducts forKey:@"&&products"];
-    }
-    return contextData;
+    [self.adobeMobile trackAction:adobeEcommerceEvents[eventName] data:contextData];
 }
 
 /**"Category;Product;Quantity;Price
@@ -687,43 +647,29 @@ BOOL isBoolean(NSObject* object){
 
 - (NSString *) formatProduct:(NSDictionary *) product {
     NSString *category = product[@"category"] ?: @"";
-    
-    // The product argument is REQUIRED for Adobe ecommerce events.
-    // This value can be 'name', 'sku', or 'id'. Defaults to name
-    NSString *productIdentifier = product[_productIdentifier];
-    
-    // Check : for v1 at segment implementation. What should we write instead of V! or V2?
-    // Fallback to id. Rudderstack ecommerce Spec'd `id` as the product identifier
-    // The setting productIdentifier checks for id, where ecommerce V2
-    // is expecting product_id.
-    if ([[self productIdentifier] isEqualToString:@"id"]) {
-        productIdentifier = product[@"product_id"] ?: product[@"id"];
-        // Check : I've added a corner case (which is not handled by Segment),
-        // i.e., if product_id value is integer then it's length cannott be determined.
-        if (productIdentifier) {
-            productIdentifier = [[NSString alloc] initWithFormat:@"%@",productIdentifier];
-        }
+
+    NSString *productIdentifier = [self getProductId:product];
+    if (!productIdentifier || [productIdentifier length] == 0) {
+        @throw [NSException exceptionWithName:NSInvalidArgumentException
+                                       reason:@"The Product Identifier configured on the dashboard must be present for each product to pass that product to Adobe Analytics."
+                                     userInfo:nil ];
+    }
+    int quantity = 1;
+    double price = 0;
+    double total = 0;
+    @try {
+        quantity = [product[@"quantity"] intValue];
+    } @catch (NSException *e){
+        [RSLogger logDebug:@"Unable to convert Quantity into int type"];
+    }
+    @try {
+        price = [product[@"price"] doubleValue];
+        total = price * quantity;
+    } @catch (NSException *e){
+        [RSLogger logDebug:@"Unable to convert price into Double type"];
     }
     
-    // Check : Should we remove the logger comment and simply return?
-    // There strategies is that Product variable must be present etc.
-    if ([productIdentifier length] == 0) {
-        [RSLogger logDebug:@"Product is a required field."];
-        return nil;
-    }
-    
-    // Check : If user doesn't set price then by defualt price is set to zero.
-    // Which I think is not the ideal case to be, if user
-    // (Segment has implemented in this way), so should I proceed with Segment!
-    
-    // Adobe expects Price to refer to the total price (unit price x units).
-    int quantity = [product[@"quantity"] intValue] ?: 1;
-    double price = [product[@"price"] doubleValue] ?: 0;
-    double total = price * quantity;
-    
-    // Check : If any product value is missing e.g.,
     NSArray *output;
-//    if (product[@"category"] && product[@"product"] && product[@"quantity"] && product[@"price"]) {
     if (product[@"quantity"] && product[@"price"]) {
         output = @[ category, productIdentifier, [NSNumber numberWithInt:quantity], [NSNumber numberWithDouble:total] ];
     }
@@ -734,14 +680,25 @@ BOOL isBoolean(NSObject* object){
         NSString *emptyQuantity = @"";
         output = @[ category, productIdentifier, emptyQuantity, [NSNumber numberWithDouble:total] ];
     }
-//    else if (!productIdentifier){
-//        return nil;
-//    }
     else {
         output = @[ category, productIdentifier];
     }
-    
     return [output componentsJoinedByString:@";"];
+}
+
+-(NSString *) getProductId:(NSDictionary *)product {
+    if ([self.productIdentifier isEqualToString:@"id"]) {
+        if ([product objectForKey:@"product_id"]) {
+            return [self getString:product[@"product_id"]];
+        }
+        if ([product objectForKey:@"productId"]) {
+            return [self getString:product[@"productId"]];
+        }
+        if ([product objectForKey:@"id"]) {
+            return [self getString:product[@"id"]];
+        }
+    }
+    return [self getString:product[self.productIdentifier]];
 }
 
 -(void) setAdobeEcommerceEvents {
@@ -756,28 +713,28 @@ BOOL isBoolean(NSObject* object){
     };
 }
 
--(void) setAdobeVideoEvents {
-    adobeVideoEvents =
-    @{
-        @"heartbeatPlaybackStarted" : @"Video Playback Started",
-        @"heartbeatPlaybackPaused" : @"Video Playback Paused",
-        @"heartbeatPlaybackResumed" : @"Video Playback Resumed",
-        @"heartbeatPlaybackCompleted" : @"Video Playback Completed",
-        @"heartbeatContentStarted" : @"Video Content Started",
-        @"heartbeatContentComplete" : @"Video Content Completed",
-        @"heartbeatBufferStarted" : @"Video Playback Buffer Started",
-        @"heartbeatBufferCompleted" : @"Video Playback Buffer Completed",
-        @"heartbeatSeekStarted" : @"Video Playback Seek Started",
-        @"heartbeatSeekCompleted" : @"Video Playback Seek Completed",
-        @"heartbeatAdBreakStarted" : @"Video Ad Break Started",
-        @"heartbeatAdBreakCompleted" : @"Video Ad Break Completed",
-        @"heartbeatAdStarted" : @"Video Ad Started",
-        @"heartbeatAdSkipped" : @"Video Ad Skipped",
-        @"heartbeatAdCompleted" : @"Video Ad Completed",
-        @"heartbeatPlaybackInterrupted" : @"Video Playback Interrupted",
-        @"heartbeatQualityUpdated" : @"Video Quality Updated",
-    };
-}
+//-(void) setAdobeVideoEvents {
+//    adobeVideoEvents =
+//    @{
+//        @"heartbeatPlaybackStarted" : @"Video Playback Started",
+//        @"heartbeatPlaybackPaused" : @"Video Playback Paused",
+//        @"heartbeatPlaybackResumed" : @"Video Playback Resumed",
+//        @"heartbeatPlaybackCompleted" : @"Video Playback Completed",
+//        @"heartbeatContentStarted" : @"Video Content Started",
+//        @"heartbeatContentComplete" : @"Video Content Completed",
+//        @"heartbeatBufferStarted" : @"Video Playback Buffer Started",
+//        @"heartbeatBufferCompleted" : @"Video Playback Buffer Completed",
+//        @"heartbeatSeekStarted" : @"Video Playback Seek Started",
+//        @"heartbeatSeekCompleted" : @"Video Playback Seek Completed",
+//        @"heartbeatAdBreakStarted" : @"Video Ad Break Started",
+//        @"heartbeatAdBreakCompleted" : @"Video Ad Break Completed",
+//        @"heartbeatAdStarted" : @"Video Ad Started",
+//        @"heartbeatAdSkipped" : @"Video Ad Skipped",
+//        @"heartbeatAdCompleted" : @"Video Ad Completed",
+//        @"heartbeatPlaybackInterrupted" : @"Video Playback Interrupted",
+//        @"heartbeatQualityUpdated" : @"Video Quality Updated",
+//    };
+//}
 
 /**
  Event tracking for Adobe Heartbeats.
@@ -785,9 +742,9 @@ BOOL isBoolean(NSObject* object){
  */
 -(void) trackHeartbeatEvents:(nonnull RSMessage *) message
 {
-    NSString *eventName = message.event;
+    NSString *eventName = self.videoEvents[message.event];
     NSMutableDictionary *eventProperties = [message.properties mutableCopy];
-    if ([eventName isEqualToString:@"Video Playback Started"]) {
+    if ([eventName isEqualToString:@"heartbeatPlaybackStarted"]) {
         self.heartbeatConfig = [self createConfig:message];
         // createConfig can return nil if the Adobe required field
         // trackingServer is not properly configured in Segment's UI.
@@ -799,28 +756,30 @@ BOOL isBoolean(NSObject* object){
         self.mediaHeartbeat = [self.heartbeatFactory createWithDelegate:self.playbackDelegate andConfig:self.heartbeatConfig];
         self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Playback"];
         NSMutableDictionary *topLevelProperties = [self extractTrackTopLevelProps:message];
-        NSDictionary *contextData = [self mapContextValues:eventProperties andContext:message.context withTopLevelProps:topLevelProperties];
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
+                                                                 andContext:message.context
+                                                          withTopLevelProps:topLevelProperties];
         [self.mediaHeartbeat trackSessionStart:self.mediaObject data:contextData];
         [RSLogger logVerbose:[NSString stringWithFormat:@"[ADBMediaHeartbeat trackSessionStart:%@ data:%@]", self.mediaObject, contextData]];
         return;
     }
 
     /*
-    if ([payload.event isEqualToString:@"Video Playback Paused"]) {
+    if ([payload.event isEqualToString:@"heartbeatPlaybackPaused"]) {
         [self.playbackDelegate pausePlayhead];
         [self.mediaHeartbeat trackPause];
         SEGLog(@"[ADBMediaHeartbeat trackPause]");
         return;
     }
     
-    if ([payload.event isEqualToString:@"Video Playback Resumed"]) {
+    if ([payload.event isEqualToString:@"heartbeatPlaybackResumed"]) {
         [self.playbackDelegate unPausePlayhead];
         [self.mediaHeartbeat trackPlay];
         SEGLog(@"[ADBMediaHeartbeat trackPlay]");
         return;
     }
 
-    if ([payload.event isEqualToString:@"Video Playback Completed"]) {
+    if ([payload.event isEqualToString:@"heartbeatPlaybackCompleted"]) {
         [self.playbackDelegate pausePlayhead];
         [self.mediaHeartbeat trackComplete];
         SEGLog(@"[ADBMediaHeartbeat trackComplete]");
@@ -829,7 +788,7 @@ BOOL isBoolean(NSObject* object){
         return;
     }
 
-    if ([payload.event isEqualToString:@"Video Content Started"]) {
+    if ([payload.event isEqualToString:@"heartbeatContentStarted"]) {
         [self.mediaHeartbeat trackPlay];
         SEGLog(@"[ADBMediaHeartbeat trackPlay]");
         self.mediaObject = [self createMediaObject:payload.properties andEventType:@"Content"];
@@ -840,7 +799,7 @@ BOOL isBoolean(NSObject* object){
         return;
     }
 
-    if ([payload.event isEqualToString:@"Video Content Completed"]) {
+    if ([payload.event isEqualToString:@"heartbeatContentComplete"]) {
         self.mediaObject = [self createMediaObject:payload.properties andEventType:@"Content"];
 
         // Adobe examples show that the mediaObject and data should be nil on Chapter Complete events
@@ -851,10 +810,10 @@ BOOL isBoolean(NSObject* object){
     }
 
     NSDictionary *videoTrackEvents = @{
-        @"Video Playback Buffer Started" : @(ADBMediaHeartbeatEventBufferStart),
-        @"Video Playback Buffer Completed" : @(ADBMediaHeartbeatEventBufferComplete),
-        @"Video Playback Seek Started" : @(ADBMediaHeartbeatEventSeekStart),
-        @"Video Playback Seek Completed" : @(ADBMediaHeartbeatEventSeekComplete)
+        @"heartbeatBufferStarted" : @(ADBMediaHeartbeatEventBufferStart),
+        @"heartbeatBufferCompleted" : @(ADBMediaHeartbeatEventBufferComplete),
+        @"heartbeatSeekStarted" : @(ADBMediaHeartbeatEventSeekStart),
+        @"heartbeatSeekCompleted" : @(ADBMediaHeartbeatEventSeekComplete)
     };
 
     enum ADBMediaHeartbeatEvent videoEvent = [videoTrackEvents[payload.event] intValue];
@@ -883,27 +842,27 @@ BOOL isBoolean(NSObject* object){
         return;
     }
 
-    if ([payload.event isEqualToString:@"Video Playback Interrupted"]) {
+    if ([payload.event isEqualToString:@"heartbeatPlaybackInterrupted"]) {
         [self.playbackDelegate pausePlayhead];
         return;
     }
 
     // Video Ad Break Started/Completed are not spec'd. For now, will document for Adobe and
     // write a proposal to add this to the Video Spec
-    if ([payload.event isEqualToString:@"Video Ad Break Started"]) {
+    if ([payload.event isEqualToString:@"heartbeatAdBreakStarted"]) {
         self.mediaObject = [self createMediaObject:payload.properties andEventType:@"Ad Break"];
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakStart mediaObject:self.mediaObject data:nil];
         SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakStart mediaObject:%@ data:nil]", self.mediaObject);
         return;
     }
 
-    if ([payload.event isEqualToString:@"Video Ad Break Completed"]) {
+    if ([payload.event isEqualToString:@"heartbeatAdBreakCompleted"]) {
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakComplete mediaObject:nil data:nil];
         SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakComplete mediaObject:nil data:nil]");
         return;
     }
 
-    if ([payload.event isEqualToString:@"Video Ad Started"]) {
+    if ([payload.event isEqualToString:@"heartbeatAdStarted"]) {
         self.mediaObject = [self createMediaObject:payload.properties andEventType:@"Ad"];
         NSMutableDictionary *topLevelProperties = [self extractSEGTrackTopLevelProps:payload];
         NSDictionary *contextData = [self mapContextValues:payload.properties andContext:payload.context withTopLevelProps:topLevelProperties];
@@ -913,19 +872,19 @@ BOOL isBoolean(NSObject* object){
     }
 
     // Not spec'd
-    if ([payload.event isEqualToString:@"Video Ad Skipped"]) {
+    if ([payload.event isEqualToString:@"heartbeatAdSkipped"]) {
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdSkip mediaObject:nil data:nil];
         SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdSkip mediaObject:nil data:nil]");
         return;
     }
 
-    if ([payload.event isEqualToString:@"Video Ad Completed"]) {
+    if ([payload.event isEqualToString:@"heartbeatAdCompleted"]) {
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdComplete mediaObject:nil data:nil];
         SEGLog(@"[self.ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdComplete mediaObject:nil data:nil];");
         return;
     }
 
-    if ([payload.event isEqualToString:@"Video Quality Updated"]) {
+    if ([payload.event isEqualToString:@"heartbeatQualityUpdated"]) {
         NSMutableDictionary *topLevelProperties = [self extractSEGTrackTopLevelProps:payload];
         NSDictionary *contextData = [self mapContextValues:payload.properties andContext:payload.context withTopLevelProps:topLevelProperties];
         [self.playbackDelegate createAndUpdateQOSObject:contextData];
@@ -955,12 +914,7 @@ BOOL isBoolean(NSObject* object){
         sslEnabled = true;
     }
 
-    BOOL debugEnabled = false;
-    // Check : Review it again properly
-    debugEnabled = true;
-//    if (options[@"debug"]) {
-//        debugEnabled = true;
-//    }
+//    BOOL debugEnabled = self.videoDebug;
 
     NSMutableDictionary *infoDictionary = [[[NSBundle mainBundle] infoDictionary] mutableCopy];
     [infoDictionary addEntriesFromDictionary:[[NSBundle mainBundle] localizedInfoDictionary]];
@@ -971,11 +925,10 @@ BOOL isBoolean(NSObject* object){
     }
     self.heartbeatConfig.trackingServer = self.trackingServerUrl;
     self.heartbeatConfig.channel = eventProperties[@"channel"] ?: @"";
-    // Check : (After making changes at RSOption for iOS-sdk) Review it
-    self.heartbeatConfig.ovp = @"unknown";//options[@"ovp_name"] ?: @"unknown";
     self.heartbeatConfig.playerName = eventProperties[@"video_player"] ?: @"";
+    self.heartbeatConfig.ovp = @"unknown";
     self.heartbeatConfig.ssl = sslEnabled;
-    self.heartbeatConfig.debugLogging = debugEnabled;
+    self.heartbeatConfig.debugLogging = self.videoDebug;
 
     return self.heartbeatConfig;
 }

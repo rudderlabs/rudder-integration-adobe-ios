@@ -35,13 +35,14 @@
     
     
     
-//    [[RSClient sharedInstance] identify:@"iOS_user_new"];
+    [[RSClient sharedInstance] identify:@"iOS_user_new"];
+    [self videoEvents];
+
 //    [[RSClient sharedInstance] track:@"Order Completed" properties:@{
-//        @"revenue" : @1001,
 //        @"orderId" : @"1001",
-//        @"currency" : @"USD",
-//        @"custom_1" : @"1custom",
-//        @"custom_2" : @1345,
+//        @"curr" : @"USD",
+//        @"1" : @"1custom",
+//        @"2" : @1345,
 //        @"products" : @[
 //                @{
 //                    @"category" : @"11Cloths",
@@ -144,10 +145,14 @@
 //                                  @"custom_2" : @6345,
 //                              }];
 //
-    [[RSClient sharedInstance] track:@"Custom Track"
-                              properties:@{
-                                  @"custom_2" : @72345
-                              }];
+    
+//    [[RSClient sharedInstance] track:@"Custom Track"
+//                              properties:@{
+//                                  @"1" : @123.56,
+//                                  @"2" : @72345,
+//                                  @"3" : @"String1",
+//                                  @"4" : @"Custom track call 1"
+//                              }];
 //
 //    [[RSClient sharedInstance] screen:@"screen_call"
 //                                  properties:@{
@@ -216,6 +221,124 @@
     return YES;
 }
 
+- (void) videoEvents {
+    [self trackVideoPlaybackStarted];
+    [self trackVideoQualityUpdated];
+    [self trackVideoPlaybackResumed];
+    [self trackVideoPlaybackCompleted];
+}
+
+- (void) trackVideoPlaybackStarted {
+    [[RSClient sharedInstance] track:@"Playback Started" properties:@{
+        @"assetId" : @"Playback Started asset ID",             //Content           //MediaObject   //a.media...
+        @"program" : @"Program: Flash",                        //show              //a.media...
+        @"season" : @"season: Season-1",                                           //a.media...
+        @"episode" : @"episdoe: Episode-1",                                        //a.media...
+        @"genre" : @"genre: Sci-Fi",                                               //a.media...
+        @"channel" : @"channel: Amaz",                         //NETWORK           //a.media...
+        @"airdate" : @"airdat: 28june",                                            //a.media...    -NO
+        @"publisher" : @"publisher: 1",                      //ORIGINATOR        //a.media...    -NO
+        @"rating" : @"rating: 62",                                                //a.media...    -NO
+        @"title" : @"title: Flash_Season_3",                   //Content Name      //MediaObject
+        @"totalLength" : @300,                                  //Content Length    //MediaObject
+        @"livestream" : @true,                                  //Content Type      //(default VOD)
+        
+        @"video_player" : @"video_player: html",
+        
+        //Custom Properties
+        @"full_screen" : @true,
+        @"framerate" : @"598",
+        @"ad_enabled" : @true,
+        @"quality" : @"hd1800p",
+        @"bitrate" : @256,
+        @"sound" : @129
+    }];
+}
+
+- (void) trackVideoPlaybackPaused {
+    [[RSClient sharedInstance] track:@"Playback Paused"];
+}
+
+- (void) trackVideoPlaybackResumed {
+    [[RSClient sharedInstance] track:@"Playback Resumed"];
+}
+
+- (void) trackVideoContentStarted {
+    [[RSClient sharedInstance] track:@"Content Start" properties:@{
+        @"chapter_name" : @"title: You Win Die29",
+        @"length" : @299.0,
+        @"startTime" : @291.0,
+        @"position" : @295
+    }];
+}
+
+- (void) trackVideoContentComplete {
+    [[RSClient sharedInstance] track:@"Content Complete"];
+}
+
+- (void) trackVideoPlaybackCompleted {
+    [[RSClient sharedInstance] track:@"Playback Completed"];
+}
+
+- (void) trackVideoBufferStarted {
+    [[RSClient sharedInstance] track:@"Buffer Started"];
+}
+
+- (void) trackVideoBufferComplete {
+    [[RSClient sharedInstance] track:@"Buffer Completed"];
+}
+
+- (void) trackVideoSeekStarted {
+    [[RSClient sharedInstance] track:@"Seek Started"];
+}
+
+- (void) trackVideoSeekComplete {
+    [[RSClient sharedInstance] track:@"Seek Complete" properties:@{
+        @"seekPosition" : @73L
+    }];
+}
+
+- (void) trackVideoAdBreakStarted {
+    [[RSClient sharedInstance] track:@"Ad Break Started" properties:@{
+        @"title" : @"title: TV Commercial29",
+        @"startTime" : @29.0,
+        @"indexPosition" : @99L
+    }];
+}
+
+- (void) trackVideoAdBreakCompleted {
+    [[RSClient sharedInstance] track:@"Ad Break Completed"];
+}
+
+- (void) trackVideoAdStarted {
+    [[RSClient sharedInstance] track:@"Ad Start" properties:@{
+        @"title" : @"title: TV Commercial3291",
+        @"assetId" : @"12300001",
+        @"totalLength" : @129.01,
+        @"position" : @81L
+    }];
+}
+
+- (void) trackVideoAdSkipped {
+    [[RSClient sharedInstance] track:@"Ad Skipped"];
+}
+
+- (void) trackVideoAdCompleted {
+    [[RSClient sharedInstance] track:@"Ad Completed"];
+}
+
+- (void) trackVideoPlaybackInterrupted {
+    [[RSClient sharedInstance] track:@"Playback Interrupted"];
+}
+
+- (void) trackVideoQualityUpdated {
+    [[RSClient sharedInstance] track:@"Quality Updated" properties:@{
+        @"bitrate" : @256,
+        @"startupTime" : @39,
+        @"fps" : @64,
+        @"droppedFrames" : @3
+    }];
+}
 
 - (void)applicationWillResignActive:(UIApplication *)application
 {

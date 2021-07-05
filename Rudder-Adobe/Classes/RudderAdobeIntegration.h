@@ -7,7 +7,6 @@
 
 #import <Foundation/Foundation.h>
 #import <Rudder/Rudder.h>
-//#import <Rudder/RSLogger.h>
 
 #import <AdobeMobileSDK/ADBMobile.h>
 
@@ -20,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 @protocol RSADBMediaHeartbeatFactory <NSObject>
-- (ADBMediaHeartbeat *_Nullable)createWithDelegate: (id _Nullable)delegate  andConfig:(ADBMediaHeartbeatConfig *_Nullable)config;
+- (ADBMediaHeartbeat *_Nullable) createWithDelegate:(id _Nullable)delegate  andConfig:(ADBMediaHeartbeatConfig *_Nullable)config;
 @end
 
 @interface RSRealADBMediaHeartbeatFactory : NSObject <RSADBMediaHeartbeatFactory>
@@ -30,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 @protocol RSADBMediaObjectFactory <NSObject>
--(ADBMediaObject *_Nullable) createWithProperties:(NSDictionary *_Nullable)properties andEventType:(NSString *_Nullable)eventType;
+- (ADBMediaObject *_Nullable) createWithProperties:(NSDictionary *_Nullable)properties andEventType:(NSString *_Nullable)eventType;
 @end
 
 @interface RSRealADBMediaObjectFactory : NSObject <RSADBMediaObjectFactory>
@@ -89,6 +88,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) BOOL ssl;
 @property (nonatomic) BOOL isTrackLifecycleEvents;
+@property (nonatomic) BOOL videoDebug;
 
 @property (nonatomic, strong, nullable) ADBMediaHeartbeat *mediaHeartbeat;
 @property (nonatomic, strong, nullable) id<RSADBMediaHeartbeatFactory> heartbeatFactory;
