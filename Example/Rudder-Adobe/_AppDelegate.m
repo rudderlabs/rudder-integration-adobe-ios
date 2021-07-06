@@ -76,11 +76,13 @@
 //
 //    [[RSClient sharedInstance] track:@"Product Added"
 //                          properties:@{
+//                              @"1" : @"2custom",
+//                              @"2" : @YES,
+//                              @"category" : @"Product_Added_Category",
 //                              @"productId" : @"200001",
 //                              @"name": @"21Bag",
 //                              @"quantity" : @21,
-//                              @"price" : @201,
-//                              @"custom_1" : @"2custom"
+//                              @"price" : @201
 //                          }];
 //
 //    [[RSClient sharedInstance] track:@"Checkout Started"

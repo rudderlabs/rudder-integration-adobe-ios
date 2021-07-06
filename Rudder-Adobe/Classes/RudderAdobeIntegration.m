@@ -308,8 +308,6 @@ static NSDictionary *adobeEcommerceEvents;
                     [RSLogger logDebug:@"Rudderstack currently does not support mapping of ecommerce events to custom Adobe events."];
                     return;
                 }
-//                NSMutableDictionary<NSString*, NSObject*>* eventProperties = [message.properties mutableCopy];
-//                NSDictionary *contextData =
                 [self handleEcommerce:adobeEcommerceEvents[[eventName lowercaseString]] andMessage: message];
                 return;
             }
@@ -328,8 +326,7 @@ static NSDictionary *adobeEcommerceEvents;
                 return;
             }
             NSMutableDictionary *eventProperties = [message.properties mutableCopy];
-            NSMutableDictionary *topLevelProperties = [self extractTrackTopLevelProps:message];
-            NSMutableDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andContext:message.context withTopLevelProps:topLevelProperties];
+            NSMutableDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
             if (!contextData) {
                 contextData = [[NSMutableDictionary alloc] init];
             }
@@ -339,8 +336,7 @@ static NSDictionary *adobeEcommerceEvents;
     }
     else if ([type isEqualToString:@"screen"]){
         NSMutableDictionary *eventProperties = [message.properties mutableCopy];
-        NSMutableDictionary *topLevelProperties = [self extractTrackTopLevelProps:message];
-        NSMutableDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andContext:message.context withTopLevelProps:topLevelProperties];
+        NSMutableDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
         [self.adobeMobile trackState:message.event data:contextData];
 
     }
@@ -372,22 +368,8 @@ BOOL isTrackLifecycleEvents(NSString *eventName)
 
 - (NSString *)mappedEvents:(NSString *)eventName
 {
-//    NSDictionary *mappedEvents = self.rudderEventsToAdobeEvents;
-//    for (NSString *key in eventsV2) {
-//        if ([key isEqualToString:eventName]) {
-//            return [eventsV2 objectForKey:key];
-//        }
-//    }
-//    if(mappedEvents[eventName]) {
-//        return mappedEvents[eventName];
-//    }
-    
     NSDictionary *mappedEvent = self.rudderEventsToAdobeEvents;
     return mappedEvent[eventName];
-    //    if (mappedEvent[eventName]) {
-//        return mappedEvent[eventName];
-//    }
-//    return nil;
 }
 
 -(NSMutableDictionary *) extractTrackTopLevelProps:(RSMessage *) message {
@@ -447,9 +429,6 @@ BOOL isBoolean(NSObject* object){
     if ([key isEqualToString:@"timezone"]) {
         NSMutableDictionary<NSString *, id> *contextData = [NSMutableDictionary<NSString *, id> dictionary];
         [contextData setObject:context.timezone forKey: @"timezone"];
-//        NSMutableDictionary<NSString *, id> *contextData2 = [NSMutableDictionary<NSString *, id> dictionary];
-//        [contextData2 setObject:context.timezone forKey: @"timezone"];
-//        [contextData addEntriesFromDictionary:contextData2];
         return contextData;
     }
     
@@ -457,8 +436,9 @@ BOOL isBoolean(NSObject* object){
 }
 
 -(NSMutableDictionary *) getCustomMappedAndExtraProperties:(NSMutableDictionary *)eventProperties
-                                                andContext:(RSContext *)context
-                                         withTopLevelProps:(NSMutableDictionary *)topLevelProps {
+                                                andMessage:(nonnull RSMessage *) message {
+    NSMutableDictionary *topLevelProps = [self extractTrackTopLevelProps:message];
+    RSContext *context = message.context;
     NSInteger contextValuesSize = [self.contextData count];
     if ([eventProperties count] > 0 && contextValuesSize > 0) {
         NSMutableDictionary *cData = [[NSMutableDictionary alloc] initWithCapacity:contextValuesSize];
@@ -521,9 +501,6 @@ BOOL isBoolean(NSObject* object){
 
 -(void) handleEcommerce:(NSString *)eventName andMessage: (nonnull RSMessage *) message {
     NSMutableDictionary* eventProperties = [message.properties mutableCopy];
-
-    NSMutableDictionary *topLevelProperties = [self extractTrackTopLevelProps:message];
-//    NSMutableDictionary *contextData = [[NSMutableDictionary alloc] initWithDictionary:data];
     NSMutableDictionary *contextData = [[NSMutableDictionary alloc] init];
     
     // If you trigger a product-specific event by using the &&products variable,
@@ -588,8 +565,7 @@ BOOL isBoolean(NSObject* object){
     }
     
     NSMutableDictionary *data = [self getCustomMappedAndExtraProperties:eventProperties
-                                                             andContext:message.context
-                                                      withTopLevelProps:topLevelProperties];
+                                                             andMessage:message ];
     if (data) {
         [contextData addEntriesFromDictionary:data];
         [data removeAllObjects];
@@ -755,57 +731,55 @@ BOOL isBoolean(NSObject* object){
         self.playbackDelegate = [self.delegateFactory createPlaybackDelegateWithPosition:playheadPosition];
         self.mediaHeartbeat = [self.heartbeatFactory createWithDelegate:self.playbackDelegate andConfig:self.heartbeatConfig];
         self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Playback"];
-        NSMutableDictionary *topLevelProperties = [self extractTrackTopLevelProps:message];
         NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
-                                                                 andContext:message.context
-                                                          withTopLevelProps:topLevelProperties];
+                                                                 andMessage:message];
         [self.mediaHeartbeat trackSessionStart:self.mediaObject data:contextData];
         [RSLogger logVerbose:[NSString stringWithFormat:@"[ADBMediaHeartbeat trackSessionStart:%@ data:%@]", self.mediaObject, contextData]];
         return;
     }
 
-    /*
-    if ([payload.event isEqualToString:@"heartbeatPlaybackPaused"]) {
+    
+    if ([eventName isEqualToString:@"heartbeatPlaybackPaused"]) {
         [self.playbackDelegate pausePlayhead];
         [self.mediaHeartbeat trackPause];
-        SEGLog(@"[ADBMediaHeartbeat trackPause]");
+        [RSLogger logVerbose:@"ADBMediaHeartbeat trackPause"];
         return;
     }
     
-    if ([payload.event isEqualToString:@"heartbeatPlaybackResumed"]) {
+    if ([eventName isEqualToString:@"heartbeatPlaybackResumed"]) {
         [self.playbackDelegate unPausePlayhead];
         [self.mediaHeartbeat trackPlay];
-        SEGLog(@"[ADBMediaHeartbeat trackPlay]");
+        [RSLogger logVerbose:@"ADBMediaHeartbeat trackPlay"];
         return;
     }
 
-    if ([payload.event isEqualToString:@"heartbeatPlaybackCompleted"]) {
+    if ([eventName isEqualToString:@"heartbeatPlaybackCompleted"]) {
         [self.playbackDelegate pausePlayhead];
         [self.mediaHeartbeat trackComplete];
-        SEGLog(@"[ADBMediaHeartbeat trackComplete]");
+        [RSLogger logVerbose:@"ADBMediaHeartbeat trackComplete"];
         [self.mediaHeartbeat trackSessionEnd];
-        SEGLog(@"[ADBMediaHeartbeat trackSessionEnd]");
+        [RSLogger logVerbose:@"ADBMediaHeartbeat trackSessionEnd"];
         return;
     }
-
-    if ([payload.event isEqualToString:@"heartbeatContentStarted"]) {
+    
+    if ([eventName isEqualToString:@"heartbeatContentStarted"]) {
         [self.mediaHeartbeat trackPlay];
-        SEGLog(@"[ADBMediaHeartbeat trackPlay]");
-        self.mediaObject = [self createMediaObject:payload.properties andEventType:@"Content"];
-        NSMutableDictionary *topLevelProperties = [self extractSEGTrackTopLevelProps:payload];
-        NSDictionary *contextData = [self mapContextValues:payload.properties andContext:payload.context withTopLevelProps:topLevelProperties];
+        [RSLogger logVerbose:@"ADBMediaHeartbeat trackPlay"];
+        self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Content"];
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
+                                                                 andMessage:message];
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterStart mediaObject:self.mediaObject data:contextData];
-        SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterStart mediaObject:%@ data:%@]", self.mediaObject, contextData);
+        [RSLogger logVerbose:[NSString stringWithFormat:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterStart mediaObject:%@ data:%@", self.mediaObject, contextData]];
         return;
     }
 
-    if ([payload.event isEqualToString:@"heartbeatContentComplete"]) {
-        self.mediaObject = [self createMediaObject:payload.properties andEventType:@"Content"];
+    if ([eventName isEqualToString:@"heartbeatContentComplete"]) {
+        self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Content"];
 
         // Adobe examples show that the mediaObject and data should be nil on Chapter Complete events
         // https://github.com/Adobe-Marketing-Cloud/video-heartbeat-v2/blob/master/sdks/iOS/samples/BasicPlayerSample/BasicPlayerSample/Classes/analytics/VideoAnalyticsProvider.m#L158
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterComplete mediaObject:nil data:nil];
-        SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterComplete mediaObject:nil data:nil]");
+        [NSString stringWithFormat:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterComplete mediaObject:nil data:nil"];
         return;
     }
 
@@ -816,8 +790,8 @@ BOOL isBoolean(NSObject* object){
         @"heartbeatSeekCompleted" : @(ADBMediaHeartbeatEventSeekComplete)
     };
 
-    enum ADBMediaHeartbeatEvent videoEvent = [videoTrackEvents[payload.event] intValue];
-    long position = [payload.properties[@"position"] longValue] ?: 0;
+    enum ADBMediaHeartbeatEvent videoEvent = [videoTrackEvents[eventName] intValue];
+    long position = [eventProperties[@"position"] longValue] ?: 0;
     switch (videoEvent) {
         case ADBMediaHeartbeatEventBufferStart:
         case ADBMediaHeartbeatEventSeekStart:
@@ -834,63 +808,61 @@ BOOL isBoolean(NSObject* object){
     }
 
     if (videoEvent) {
-        self.mediaObject = [self createMediaObject:payload.properties andEventType:@"Video"];
-        NSMutableDictionary *topLevelProperties = [self extractSEGTrackTopLevelProps:payload];
-        NSDictionary *contextData = [self mapContextValues:payload.properties andContext:payload.context withTopLevelProps:topLevelProperties];
+        self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Video"];
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
+                                                                 andMessage:message];
         [self.mediaHeartbeat trackEvent:videoEvent mediaObject:self.mediaObject data:contextData];
-        SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventBufferStart mediaObject:%@ data:%@]", self.mediaObject, contextData);
+        [RSLogger logVerbose:[NSString stringWithFormat:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventBufferStart mediaObject:%@ data:%@", self.mediaObject, contextData]];
         return;
     }
 
-    if ([payload.event isEqualToString:@"heartbeatPlaybackInterrupted"]) {
+    if ([eventName isEqualToString:@"heartbeatPlaybackInterrupted"]) {
         [self.playbackDelegate pausePlayhead];
         return;
     }
 
     // Video Ad Break Started/Completed are not spec'd. For now, will document for Adobe and
     // write a proposal to add this to the Video Spec
-    if ([payload.event isEqualToString:@"heartbeatAdBreakStarted"]) {
-        self.mediaObject = [self createMediaObject:payload.properties andEventType:@"Ad Break"];
+    if ([eventName isEqualToString:@"heartbeatAdBreakStarted"]) {
+        self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Ad Break"];
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakStart mediaObject:self.mediaObject data:nil];
-        SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakStart mediaObject:%@ data:nil]", self.mediaObject);
+        [RSLogger logVerbose:[NSString stringWithFormat:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakStart mediaObject:%@ data:nil", self.mediaObject]];
         return;
     }
 
-    if ([payload.event isEqualToString:@"heartbeatAdBreakCompleted"]) {
+    if ([eventName isEqualToString:@"heartbeatAdBreakCompleted"]) {
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakComplete mediaObject:nil data:nil];
-        SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakComplete mediaObject:nil data:nil]");
+        [RSLogger logVerbose:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakComplete mediaObject:nil data:nil"];
         return;
     }
 
-    if ([payload.event isEqualToString:@"heartbeatAdStarted"]) {
-        self.mediaObject = [self createMediaObject:payload.properties andEventType:@"Ad"];
-        NSMutableDictionary *topLevelProperties = [self extractSEGTrackTopLevelProps:payload];
-        NSDictionary *contextData = [self mapContextValues:payload.properties andContext:payload.context withTopLevelProps:topLevelProperties];
+    if ([eventName isEqualToString:@"heartbeatAdStarted"]) {
+        self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Ad"];
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
+                                                                 andMessage:message];
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdStart mediaObject:self.mediaObject data:contextData];
-        SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdStart mediaObject:%@ data:%@]", self.mediaObject, contextData);
+        [RSLogger logVerbose:[NSString stringWithFormat:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdStart mediaObject:%@ data:%@", self.mediaObject, contextData]];
         return;
     }
 
-    // Not spec'd
-    if ([payload.event isEqualToString:@"heartbeatAdSkipped"]) {
+    if ([eventName isEqualToString:@"heartbeatAdSkipped"]) {
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdSkip mediaObject:nil data:nil];
-        SEGLog(@"[ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdSkip mediaObject:nil data:nil]");
+        [RSLogger logVerbose:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdSkip mediaObject:nil data:nil"];
         return;
     }
 
-    if ([payload.event isEqualToString:@"heartbeatAdCompleted"]) {
+    if ([eventName isEqualToString:@"heartbeatAdCompleted"]) {
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdComplete mediaObject:nil data:nil];
-        SEGLog(@"[self.ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdComplete mediaObject:nil data:nil];");
+        [RSLogger logVerbose:@"self.ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdComplete mediaObject:nil data:nil;"];
         return;
     }
 
-    if ([payload.event isEqualToString:@"heartbeatQualityUpdated"]) {
-        NSMutableDictionary *topLevelProperties = [self extractSEGTrackTopLevelProps:payload];
-        NSDictionary *contextData = [self mapContextValues:payload.properties andContext:payload.context withTopLevelProps:topLevelProperties];
+    if ([eventName isEqualToString:@"heartbeatQualityUpdated"]) {
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
+                                                                 andMessage:message];
         [self.playbackDelegate createAndUpdateQOSObject:contextData];
         return;
     }
-     //*/
 }
 
 /**
