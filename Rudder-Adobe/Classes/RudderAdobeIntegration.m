@@ -97,10 +97,10 @@ static NSDictionary *adobeEcommerceEvents;
  */
 - (void)createAndUpdateQOSObject:(NSDictionary *)properties
 {
-    long bitrate = [properties[@"bitrate"] longValue] ?: 0;
-    long startupTime = [properties[@"startup_time"] longValue] ?: 0;
-    long fps = [properties[@"fps"] longValue] ?: 0;
-    long droppedFrames = [properties[@"dropped_frames"] longValue] ?: 0;
+    double bitrate = [properties[@"bitrate"] doubleValue] ?: 0;
+    double startupTime = [properties[@"startupTime"] doubleValue] ?: 0;
+    double fps = [properties[@"fps"] doubleValue] ?: 0;
+    double droppedFrames = [properties[@"dropped_frames"] doubleValue] ?: 0;
     self.qosObject = [ADBMediaHeartbeat createQoSObjectWithBitrate:bitrate
                                                        startupTime:startupTime
                                                                fps:fps
@@ -163,7 +163,7 @@ static NSDictionary *adobeEcommerceEvents;
     if (!length) {
         length = 0;
     }
-    NSString *adId = properties[@"asset_id"] ?: properties[@"asset_id"];
+    NSString *adId = properties[@"asset_id"] ?: properties[@"assetId"];
 
     double startTime = [properties[@"start_time"] doubleValue] ?: [properties[@"startTime"] doubleValue];
     if (!startTime) {
@@ -312,6 +312,7 @@ static NSDictionary *adobeEcommerceEvents;
                 return;
             }
             
+            // Life Cycle events
             if([self isTrackLifecycleEvents] && isTrackLifecycleEvents(eventName)) {
                 [self.adobeMobile trackAction:eventName data:nil];
                 return;
@@ -435,70 +436,6 @@ BOOL isBoolean(NSObject* object){
     return nil;
 }
 
--(NSMutableDictionary *) getCustomMappedAndExtraProperties:(NSMutableDictionary *)eventProperties
-                                                andMessage:(nonnull RSMessage *) message {
-    NSMutableDictionary *topLevelProps = [self extractTrackTopLevelProps:message];
-    RSContext *context = message.context;
-    NSInteger contextValuesSize = [self.contextData count];
-    if ([eventProperties count] > 0 && contextValuesSize > 0) {
-        NSMutableDictionary *cData = [[NSMutableDictionary alloc] initWithCapacity:contextValuesSize];
-        NSDictionary *contextValues = self.contextData;
-        for (NSString *key in contextValues) {
-            if ([key containsString:@"."]) {
-                // Obj-c doesn't allow chaining so to support nested context object we parse the key if it contains a `.`
-                // We only support the list of predefined nested context keys as per our event spec
-                NSArray *arrayofKeyComponents = [key componentsSeparatedByString:@"."];
-                NSArray *predefinedContextKeys = @[ @"traits", @"app", @"device", @"library", @"os", @"network", @"screen"];
-                if ([predefinedContextKeys containsObject:arrayofKeyComponents[0]]) {
-                    // If 'context' contains the first key, store it in contextTraits.
-                    NSDictionary<NSString *, NSObject *> *contextTraits = [self getContextPropertykey:context withKey:arrayofKeyComponents[0]];
-                    NSString *parsedKey = arrayofKeyComponents[1];
-                    if([contextTraits count] && contextTraits[parsedKey]) {
-                        [cData setObject:contextTraits[parsedKey] forKey:contextValues[key]];
-                    }
-                }
-            }
-            
-            NSDictionary<NSString *, NSObject *> *payloadLocation;
-            // Determine whether to check the properties or context object based on the key location
-            if (eventProperties[key]) {
-                payloadLocation = [NSDictionary dictionaryWithDictionary:eventProperties];
-                [eventProperties removeObjectForKey:key];
-            }
-            NSSet *predefinedContextKeys = [NSSet setWithArray:@[ @"traits", @"app", @"device", @"library",@"locale",@"timezone",@"userAgent", @"os", @"network", @"screen"]];
-            if ([predefinedContextKeys containsObject:key]) {
-                payloadLocation = [self getContextPropertykey:context withKey:key];
-            }
-            if (payloadLocation) {
-                if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@YES]){
-                   [cData setObject:@"true" forKey:self.contextData[key]];
-                } else if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@NO]){
-                     [cData setObject:@"false" forKey:self.contextData[key]];
-                } else {
-                    [cData setObject:payloadLocation[key] forKey:self.contextData[key]];
-                }
-            }
-            
-            NSArray *topLevelProperties = @[@"event", @"messageId", @"anonymousId"];
-            if ([topLevelProperties containsObject:key] && topLevelProps[key]) {
-                [cData setObject:topLevelProps[key] forKey:contextValues[key]];
-            }
-        }
-        
-        //Handle ExtraProperties
-        if ([eventProperties count] > 0) {
-            for (NSString *key in eventProperties) {
-                NSString *propertyName = [self.contextDataPrefix stringByAppendingString:key];
-                [cData setObject:[self getString:eventProperties[key]] forKey:propertyName];
-            }
-            [eventProperties removeAllObjects];
-        }
-        if ([cData count] > 0) return cData;
-    }
-    
-    return nil;
-}
-
 -(void) handleEcommerce:(NSString *)eventName andMessage: (nonnull RSMessage *) message {
     NSMutableDictionary* eventProperties = [message.properties mutableCopy];
     NSMutableDictionary *contextData = [[NSMutableDictionary alloc] init];
@@ -564,14 +501,77 @@ BOOL isBoolean(NSObject* object){
         }
     }
     
-    NSMutableDictionary *data = [self getCustomMappedAndExtraProperties:eventProperties
-                                                             andMessage:message ];
+    NSMutableDictionary *data = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message ];
     if (data) {
         [contextData addEntriesFromDictionary:data];
         [data removeAllObjects];
     }
     
     [self.adobeMobile trackAction:adobeEcommerceEvents[eventName] data:contextData];
+}
+
+-(NSMutableDictionary *) getCustomMappedAndExtraProperties:(NSMutableDictionary *)eventProperties
+                                                andMessage:(nonnull RSMessage *) message {
+    NSMutableDictionary *topLevelProps = [self extractTrackTopLevelProps:message];
+    RSContext *context = message.context;
+    NSInteger contextValuesSize = [self.contextData count];
+    if ([eventProperties count] > 0 && contextValuesSize > 0) {
+        NSMutableDictionary *cData = [[NSMutableDictionary alloc] initWithCapacity:contextValuesSize];
+        NSDictionary *contextValues = self.contextData;
+        for (NSString *key in contextValues) {
+            if ([key containsString:@"."]) {
+                // Obj-c doesn't allow chaining so to support nested context object we parse the key if it contains a `.`
+                // We only support the list of predefined nested context keys as per our event spec
+                NSArray *arrayofKeyComponents = [key componentsSeparatedByString:@"."];
+                NSArray *predefinedContextKeys = @[ @"traits", @"app", @"device", @"library", @"os", @"network", @"screen"];
+                if ([predefinedContextKeys containsObject:arrayofKeyComponents[0]]) {
+                    // If 'context' contains the first key, store it in contextTraits.
+                    NSDictionary<NSString *, NSObject *> *contextTraits = [self getContextPropertykey:context withKey:arrayofKeyComponents[0]];
+                    NSString *parsedKey = arrayofKeyComponents[1];
+                    if([contextTraits count] && contextTraits[parsedKey]) {
+                        [cData setObject:contextTraits[parsedKey] forKey:contextValues[key]];
+                    }
+                }
+            }
+            
+            NSDictionary<NSString *, NSObject *> *payloadLocation;
+            // Determine whether to check the properties or context object based on the key location
+            if (eventProperties[key]) {
+                payloadLocation = [NSDictionary dictionaryWithDictionary:eventProperties];
+                [eventProperties removeObjectForKey:key];
+            }
+            NSSet *predefinedContextKeys = [NSSet setWithArray:@[ @"traits", @"app", @"device", @"library",@"locale",@"timezone",@"userAgent", @"os", @"network", @"screen"]];
+            if ([predefinedContextKeys containsObject:key]) {
+                payloadLocation = [self getContextPropertykey:context withKey:key];
+            }
+            if (payloadLocation) {
+                if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@YES]){
+                   [cData setObject:@"true" forKey:self.contextData[key]];
+                } else if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@NO]){
+                     [cData setObject:@"false" forKey:self.contextData[key]];
+                } else {
+                    [cData setObject:payloadLocation[key] forKey:self.contextData[key]];
+                }
+            }
+            
+            NSArray *topLevelProperties = @[@"event", @"messageId", @"anonymousId"];
+            if ([topLevelProperties containsObject:key] && topLevelProps[key]) {
+                [cData setObject:topLevelProps[key] forKey:contextValues[key]];
+            }
+        }
+        
+        //Handle ExtraProperties
+        if ([eventProperties count] > 0) {
+            for (NSString *key in eventProperties) {
+                NSString *propertyName = [self.contextDataPrefix stringByAppendingString:key];
+                [cData setObject:[self getString:eventProperties[key]] forKey:propertyName];
+            }
+            [eventProperties removeAllObjects];
+        }
+        if ([cData count] > 0) return cData;
+    }
+    
+    return nil;
 }
 
 /**"Category;Product;Quantity;Price
@@ -731,8 +731,7 @@ BOOL isBoolean(NSObject* object){
         self.playbackDelegate = [self.delegateFactory createPlaybackDelegateWithPosition:playheadPosition];
         self.mediaHeartbeat = [self.heartbeatFactory createWithDelegate:self.playbackDelegate andConfig:self.heartbeatConfig];
         self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Playback"];
-        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
-                                                                 andMessage:message];
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
         [self.mediaHeartbeat trackSessionStart:self.mediaObject data:contextData];
         [RSLogger logVerbose:[NSString stringWithFormat:@"[ADBMediaHeartbeat trackSessionStart:%@ data:%@]", self.mediaObject, contextData]];
         return;
@@ -766,8 +765,7 @@ BOOL isBoolean(NSObject* object){
         [self.mediaHeartbeat trackPlay];
         [RSLogger logVerbose:@"ADBMediaHeartbeat trackPlay"];
         self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Content"];
-        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
-                                                                 andMessage:message];
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterStart mediaObject:self.mediaObject data:contextData];
         [RSLogger logVerbose:[NSString stringWithFormat:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterStart mediaObject:%@ data:%@", self.mediaObject, contextData]];
         return;
@@ -809,8 +807,7 @@ BOOL isBoolean(NSObject* object){
 
     if (videoEvent) {
         self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Video"];
-        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
-                                                                 andMessage:message];
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
         [self.mediaHeartbeat trackEvent:videoEvent mediaObject:self.mediaObject data:contextData];
         [RSLogger logVerbose:[NSString stringWithFormat:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventBufferStart mediaObject:%@ data:%@", self.mediaObject, contextData]];
         return;
@@ -838,8 +835,7 @@ BOOL isBoolean(NSObject* object){
 
     if ([eventName isEqualToString:@"heartbeatAdStarted"]) {
         self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Ad"];
-        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
-                                                                 andMessage:message];
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdStart mediaObject:self.mediaObject data:contextData];
         [RSLogger logVerbose:[NSString stringWithFormat:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdStart mediaObject:%@ data:%@", self.mediaObject, contextData]];
         return;
@@ -858,8 +854,7 @@ BOOL isBoolean(NSObject* object){
     }
 
     if ([eventName isEqualToString:@"heartbeatQualityUpdated"]) {
-        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties
-                                                                 andMessage:message];
+        NSDictionary *contextData = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
         [self.playbackDelegate createAndUpdateQOSObject:contextData];
         return;
     }
