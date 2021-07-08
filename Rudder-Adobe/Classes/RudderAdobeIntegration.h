@@ -102,8 +102,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) Class _Nullable adobeMobile;
 
-//-(instancetype)initWithConfig:(NSDictionary *)config withAnalytics:(RSClient *)client withRudderConfig:(RSConfig*) rudderConfig adobe:(id _Nullable)ADBMobileClass;
-
 -(instancetype) initWithConfig:(NSDictionary *)config
                 withAnalytics:(RSClient *)client
              withRudderConfig:(RSConfig*) rudderConfig

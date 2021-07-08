@@ -64,7 +64,7 @@ static NSDictionary *adobeEcommerceEvents;
 /**
  Triggered when the position changes when seeking or buffering completes.
 
- @param playheadPosition Position passed in as a Segment property.
+ @param playheadPosition Position passed in as a property.
  */
 - (void)updatePlayheadPosition:(long)playheadPosition
 {
@@ -78,7 +78,7 @@ static NSDictionary *adobeEcommerceEvents;
  CFAbsoluteTimeGetCurrent retrieves the current time in seconds,
  then we calculate the delta between the CFAbsoluteTimeGetCurrent time
  and the playheadPositionTime, which is the CFAbsoluteTimeGetCurrent
- at the time a Segment Spec'd Video event is triggered.
+ at the time a Rudderstack Spec'd Video event is triggered.
 
  @return Updated playheadPosition
  */
@@ -92,8 +92,6 @@ static NSDictionary *adobeEcommerceEvents;
 
 /**
  Creates and updates a quality of service object from a "Video Quality Updated" event.
-
- @param properties Segment Properties sent on `track`
  */
 - (void)createAndUpdateQOSObject:(NSDictionary *)properties
 {
@@ -150,55 +148,65 @@ static NSDictionary *adobeEcommerceEvents;
  or Ad will build the relevant instance of ADBMediaObject,
  respectively.
 
- @param properties Properties sent on Segment `track` call
- @param eventType Denotes whether the event is a Playback, Content, or Ad event
+ @param properties Properties sent on Rudderstack `track` call
+ @param eventType Denotes whether the event is a Playback, Content, Ad Break or Ad event
  @return An instance of ADBMediaObject
  */
 - (ADBMediaObject *_Nullable)createWithProperties:(NSDictionary *_Nullable)properties andEventType:(NSString *_Nullable)eventType;
 {
-    NSString *videoName = properties[@"title"] ?: @"no title";
-    NSString *mediaId = properties[@"asset_id"] ?: properties[@"assetId"];
-    double length = [properties[@"total_length"] doubleValue] ?: [properties[@"totalLength"] doubleValue];
-    // Check : During test -> Is length is nil anytime
-    if (!length) {
-        length = 0;
-    }
-    NSString *adId = properties[@"asset_id"] ?: properties[@"assetId"];
-
-    double startTime = [properties[@"start_time"] doubleValue] ?: [properties[@"startTime"] doubleValue];
-    if (!startTime) {
-        startTime = 0;
-    }
-    double position = [properties[@"position"] doubleValue] ?: 1;
-    
-
-    // Adobe also has a third type: linear, which we have chosen
-    // to omit as it does not conform to Segment's Video spec
-    bool isLivestream = [properties[@"livestream"] boolValue];
-    NSString *streamType = ADBMediaHeartbeatStreamTypeVOD;
-    if (isLivestream) {
-        streamType = ADBMediaHeartbeatStreamTypeLIVE;
-    }
-
     if ([eventType isEqualToString:@"Playback"]) {
+        NSString *videoName = properties[@"title"] ?: @"no title";
+        NSString *mediaId = properties[@"asset_id"] ?: properties[@"assetId"];
+        if (!mediaId) {
+            mediaId = @"default ad";
+        }
+        double length = [properties[@"total_length"] doubleValue] ?: [properties[@"totalLength"] doubleValue];
+        if (!length) {
+            length = 0;
+        }
+        bool isLivestream = [properties[@"livestream"] boolValue];
+        NSString *streamType = ADBMediaHeartbeatStreamTypeVOD;
+        if (isLivestream) {
+            streamType = ADBMediaHeartbeatStreamTypeLIVE;
+        }
         return [ADBMediaHeartbeat createMediaObjectWithName:videoName
                                                     mediaId:mediaId
                                                      length:length
                                                  streamType:streamType];
     } else if ([eventType isEqualToString:@"Content"]) {
-        // Set the default length value in case if it is not initialised
-        // Refer to https://docs.rudderstack.com/destinations/analytics/adobe-analytics/adobe-analytics-heartbeat#heartbeat-video-start
-        length = [properties[@"total_length"] doubleValue] ?: 6000;
-        return [ADBMediaHeartbeat createChapterObjectWithName:videoName
+        NSString *chapter_name = properties[@"chapter_name"] ?: @"no chapter name";
+        double length = [properties[@"length"] doubleValue] ?: 6000;
+        double position = [properties[@"position"] doubleValue] ?: 1;
+        double startTime = [properties[@"start_time"] doubleValue] ?: [properties[@"startTime"] doubleValue];
+        if (!startTime) {
+            startTime = 0;
+        }
+        return [ADBMediaHeartbeat createChapterObjectWithName:chapter_name
                                                      position:position
                                                        length:length
                                                     startTime:startTime];
     } else if ([eventType isEqualToString:@"Ad Break"]) {
-        return [ADBMediaHeartbeat createAdBreakObjectWithName:videoName
+        NSString *title = properties[@"title"] ?: @"no title";
+        double position = [properties[@"position"] doubleValue] ?: 1;
+        double startTime = [properties[@"start_time"] doubleValue] ?: [properties[@"startTime"] doubleValue];
+        if (!startTime) {
+            startTime = 0;
+        }
+        return [ADBMediaHeartbeat createAdBreakObjectWithName:title
                                                      position:position
                                                     startTime:startTime];
     } else if ([eventType isEqualToString:@"Ad"]) {
-        return [ADBMediaHeartbeat createAdObjectWithName:videoName
+        NSString *title = properties[@"title"] ?: @"no title";
+        NSString *adId = properties[@"asset_id"] ?: properties[@"assetId"];
+        if (!adId) {
+            adId = @"default ad";
+        }
+        double position = [properties[@"position"] doubleValue] ?: 1;
+        double length = [properties[@"total_length"] doubleValue] ?: [properties[@"totalLength"] doubleValue];
+        if (!length) {
+            length = 0;
+        }
+        return [ADBMediaHeartbeat createAdObjectWithName:title
                                                     adId:adId
                                                 position:position
                                                   length:length];
@@ -214,7 +222,6 @@ static NSDictionary *adobeEcommerceEvents;
 
 #pragma mark - Initialization
 
-//- (instancetype) initWithConfig:(NSDictionary *)config withAnalytics:(RSClient *)client withRudderConfig:(RSConfig *)rudderConfig adobe:(id _Nullable)adobeMobile
 -(instancetype) initWithConfig:(NSDictionary *)config
                 withAnalytics:(RSClient *)client
              withRudderConfig:(RSConfig*) rudderConfig
@@ -226,11 +233,11 @@ static NSDictionary *adobeEcommerceEvents;
 {
     self = [super init];
     if (self) {
-        // do initialization here
+        
         [RSLogger logDebug:@"Initializing Adobe SDK"];
         
         self.adobeMobile = ADBMobileClass;
-        if ([config objectForKey:@"contextDataPrefix"] == nil || [[config objectForKey:@"contextDataPrefix"] isEqualToString:(@"a.")]) {
+        if ([config objectForKey:@"contextDataPrefix"] == nil || [[config objectForKey:@"contextDataPrefix"] isEqualToString:@"a."]) {
             self.contextDataPrefix = @"";
         }
         else {
@@ -240,31 +247,26 @@ static NSDictionary *adobeEcommerceEvents;
                                                        forKeys:[[config objectForKey:@"contextDataMapping"] valueForKey:@"from"]];
         self.rudderEventsToAdobeEvents = [NSDictionary dictionaryWithObjects:[[config objectForKey:@"rudderEventsToAdobeEvents"] valueForKey:@"to"]
                                                                      forKeys:[[config objectForKey:@"rudderEventsToAdobeEvents"] valueForKey:@"from"]];
+        self.videoEvents = [NSDictionary dictionaryWithObjects:[[config objectForKey:@"eventsToTypes"] valueForKey:@"to"]
+                                                       forKeys:[[config objectForKey:@"eventsToTypes"] valueForKey:@"from"]];
         self.productIdentifier = [config objectForKey:@"productIdentifier"];
-        
         
         self.trackingServerUrl = [config objectForKey:@"heartbeatTrackingServerUrl"];
         self.ssl = [[config objectForKey:@"sslHeartbeat"] boolValue];
         self.isTrackLifecycleEvents = rudderConfig.trackLifecycleEvents;
-        
-        self.videoEvents = [NSDictionary dictionaryWithObjects:[[config objectForKey:@"eventsToTypes"] valueForKey:@"to"]
-                                                       forKeys:[[config objectForKey:@"eventsToTypes"] valueForKey:@"from"]];
-        
         self.heartbeatFactory = ADBMediaHeartbeatFactory;
         self.objectFactory = ADBMediaObjectFactory;
         self.heartbeatConfig = ADBMediaHeartbeatConfig;
         self.delegateFactory = delegateFactory;
         self.videoDebug = FALSE;
-        [self setAdobeEcommerceEvents];
     }
-    // Check : Remove the below debug statement
-    [self.adobeMobile setDebugLogging:TRUE];
-    self.videoDebug = TRUE;
+    [self setAdobeEcommerceEvents];
+    
     if(rudderConfig.logLevel == RSLogLevelVerbose) {
         [self.adobeMobile setDebugLogging:TRUE];
         self.videoDebug = TRUE;
     }
-//    [self.adobeMobile collectLifecycleData];
+    [self.adobeMobile collectLifecycleData];
     
     return self;
 }
@@ -282,14 +284,25 @@ static NSDictionary *adobeEcommerceEvents;
 }
 
 - (void) reset {
-    [RSLogger logDebug:@"Inside reset"];
+    #if !TARGET_OS_WATCH && !TARGET_OS_TV
+    [self.adobeMobile trackingClearCurrentBeacon];
+    [RSLogger logDebug:@"ADBMobile trackingClearCurrentBeacon"];
+    #endif
 }
+
+//- (void)flush
+//{
+//    // Choosing to use `trackingSendQueuedHits` in lieu of
+//    // `trackingClearQueue` because the latter also
+//    // removes the queued events from the database
+//    [self.adobeMobile trackingSendQueuedHits];
+//    [RSLogger logVerbose:@"ADBMobile trackingSendQueuedHits"];
+//}
 
 - (void) processRudderEvent: (nonnull RSMessage *) message {
     NSString *type = message.type;
+    
     if([type isEqualToString:@"track"]){
-        
-        // do for track
         if (message.event)
         {
             NSString* eventName = message.event;
@@ -342,7 +355,6 @@ static NSDictionary *adobeEcommerceEvents;
 
     }
     else if ([type isEqualToString:@"identify"]){
-        // do for identify
         if (!message.userId) return;
         [self.adobeMobile setUserIdentifier : message.userId];
         [RSLogger logVerbose:[NSString stringWithFormat:@"[ADBMobile setUserIdentifier:%@]", message.userId]];
@@ -353,17 +365,9 @@ static NSDictionary *adobeEcommerceEvents;
 
 }
 
--(NSString *) getString:(NSObject *) value {
-    if (!value) {
-        return nil;
-    }
-    return [NSString stringWithFormat:@"%@", value];
-}
-
 BOOL isTrackLifecycleEvents(NSString *eventName)
 {
     NSSet *trackLifecycleEvents = [NSSet setWithArray:@[ @"Application Installed", @"Application Updated", @"Application Opened", @"Application Backgrounded"]];
-    
     return [trackLifecycleEvents containsObject:eventName];
 }
 
@@ -379,10 +383,6 @@ BOOL isTrackLifecycleEvents(NSString *eventName)
     [topLevelProperties setValue:message.event forKey:@"event"];
     [topLevelProperties setValue:message.anonymousId forKey:@"anonymousId"];
     return topLevelProperties;
-}
-
-BOOL isBoolean(NSObject* object){
-    return (object == (void*)kCFBooleanFalse || object == (void*)kCFBooleanTrue);
 }
 
 -(NSDictionary<NSString *, NSObject *> *) getContextPropertykey:(RSContext *)context withKey:(NSString *) key{
@@ -501,15 +501,16 @@ BOOL isBoolean(NSObject* object){
         }
     }
     
-    NSMutableDictionary *data = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message ];
+    NSMutableDictionary *data = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
     if (data) {
         [contextData addEntriesFromDictionary:data];
         [data removeAllObjects];
     }
     
-    [self.adobeMobile trackAction:adobeEcommerceEvents[eventName] data:contextData];
+    [self.adobeMobile trackAction:eventName data:contextData];
 }
 
+// Returns the custom properties which were mapped at Rudderstack dashboard and extraProperties along with the prefix added to the extraProperties.
 -(NSMutableDictionary *) getCustomMappedAndExtraProperties:(NSMutableDictionary *)eventProperties
                                                 andMessage:(nonnull RSMessage *) message {
     NSMutableDictionary *topLevelProps = [self extractTrackTopLevelProps:message];
@@ -535,7 +536,6 @@ BOOL isBoolean(NSObject* object){
             }
             
             NSDictionary<NSString *, NSObject *> *payloadLocation;
-            // Determine whether to check the properties or context object based on the key location
             if (eventProperties[key]) {
                 payloadLocation = [NSDictionary dictionaryWithDictionary:eventProperties];
                 [eventProperties removeObjectForKey:key];
@@ -545,13 +545,14 @@ BOOL isBoolean(NSObject* object){
                 payloadLocation = [self getContextPropertykey:context withKey:key];
             }
             if (payloadLocation) {
-                if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@YES]){
-                   [cData setObject:@"true" forKey:self.contextData[key]];
-                } else if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@NO]){
-                     [cData setObject:@"false" forKey:self.contextData[key]];
-                } else {
-                    [cData setObject:payloadLocation[key] forKey:self.contextData[key]];
-                }
+//                if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@YES]){
+//                   [cData setObject:@"true" forKey:self.contextData[key]];
+//                } else if (isBoolean(payloadLocation[key])  &&  [payloadLocation[key] isEqual:@NO]){
+//                     [cData setObject:@"false" forKey:self.contextData[key]];
+//                } else {
+//                    [cData setObject:payloadLocation[key] forKey:self.contextData[key]];
+//                }
+                [cData setObject:[self getBooleanOrStringValue:eventProperties[key]] forKey:self.contextData[key]];
             }
             
             NSArray *topLevelProperties = @[@"event", @"messageId", @"anonymousId"];
@@ -560,11 +561,26 @@ BOOL isBoolean(NSObject* object){
             }
         }
         
+        // Remove if any Video events properties are present
+        NSArray *removeVideoObjects = [NSArray arrayWithObjects:@"title", @"asset_id", @"assetId", @"total_length", @"totalLength", @"livestream", @"chapter_name", @"length", @"position", @"start_time", @"startTime", nil];
+        if ([eventProperties count] > 0){
+            for (NSString *removeProperty in removeVideoObjects) {
+                [eventProperties removeObjectForKey: removeProperty];
+            }
+        }
+        
         //Handle ExtraProperties
         if ([eventProperties count] > 0) {
             for (NSString *key in eventProperties) {
                 NSString *propertyName = [self.contextDataPrefix stringByAppendingString:key];
-                [cData setObject:[self getString:eventProperties[key]] forKey:propertyName];
+//                if (isBoolean(eventProperties[key])  &&  [eventProperties[key] isEqual:@YES]){
+//                   [cData setObject:@"true" forKey:propertyName];
+//                } else if (isBoolean(eventProperties[key])  &&  [eventProperties[key] isEqual:@NO]){
+//                    [cData setObject:@"false" forKey:propertyName];
+//                } else {
+//                    [cData setObject:[self getString:eventProperties[key]] forKey:propertyName];
+//                }
+                [cData setObject:[self getBooleanOrStringValue:eventProperties[key]] forKey:propertyName];
             }
             [eventProperties removeAllObjects];
         }
@@ -574,15 +590,39 @@ BOOL isBoolean(NSObject* object){
     return nil;
 }
 
-/**"Category;Product;Quantity;Price
-    Adobe expects products to formatted as an NSString, delimited with `;`, with values in the following order:
+/**
+ If the the value is Boolean then return @"true" or @"false"
+ else convert it into the String and return it
+ */
+- (NSString *) getBooleanOrStringValue:(NSObject *)value{
+    if (isBoolean(value)  &&  [value isEqual:@YES]){
+        return @"true";
+    } else if (isBoolean(value)  &&  [value isEqual:@NO]){
+        return @"false";
+    } else {
+        return [self getString:value];
+    }
+}
+
+BOOL isBoolean(NSObject* object){
+    return (object == (void*)kCFBooleanFalse || object == (void*)kCFBooleanTrue);
+}
+
+-(NSString *) getString:(NSObject *) value {
+    if (!value) {
+        return nil;
+    }
+    return [NSString stringWithFormat:@"%@", value];
+}
+
+/** Adobe expects products to formatted as an NSString, delimited with `;`, with values in the following order:
     `"Category;Product;Quantity;Price;eventN=X[|eventN2=X2];eVarN=merch_category[|eVarN2=merch_category2]"`
 
-     Product is a required argument, so if this is not present, Segment does not create the
+     Product is a required argument, so if this is not present, Rudderstack does not create the
      `&&products` String. This value can be the product name, sku, or productId,
-     which is configured via the Segment setting `productIdentifier`.
+     which is configured at the Rudderstack dashboard `Product Identifier`.
 
-     If the other values in the String are missing, Segment
+     If the other values in the String are missing, Rudderstack
      will leave the space empty but keep the `;` delimiter to preserve the order
      of the product properties.
 
@@ -590,26 +630,30 @@ BOOL isBoolean(NSObject* object){
 
      @"products" : @[
          @{
-             @"product_id" : @"2013294",
+             @"product_id" : @"1001",
              @"category" : @"Games",
              @"name" : @"Monopoly: 3rd Edition",
-             @"brand" : @"Hasbros",
-             @"price" : @"21.99",
+             @"price" : @"121.99",
              @"quantity" : @"1"
-         }
+         },
+         @{
+             @"product_id" : @"1002",
+             @"category" : @"Games",
+             @"name" : @"Helicopter",
+             @"price" : @"20",
+             @"quantity" : @"2"
+         },
      ]
 
-     And output the following : @"Games;Monopoly: 3rd Edition;1;21.99,;Games;Battleship;2;27.98"
+     And output the following : @"Games;Monopoly: 3rd Edition;1;121.99,;Games;Helicopter;2;40"
 
-     It can also format a product passed in as a top level property, for example
+     It can also format a product if passed within the root of the payload, for example
 
      @{
          @"product_id" : @"507f1f77bcf86cd799439011",
          @"sku" : @"G-32",
          @"category" : @"Food",
          @"name" : @"Turkey",
-         @"brand" : @"Farmers",
-         @"variant" : @"Free Range",
          @"price" : @180.99,
          @"quantity" : @1,
      }
@@ -689,29 +733,6 @@ BOOL isBoolean(NSObject* object){
     };
 }
 
-//-(void) setAdobeVideoEvents {
-//    adobeVideoEvents =
-//    @{
-//        @"heartbeatPlaybackStarted" : @"Video Playback Started",
-//        @"heartbeatPlaybackPaused" : @"Video Playback Paused",
-//        @"heartbeatPlaybackResumed" : @"Video Playback Resumed",
-//        @"heartbeatPlaybackCompleted" : @"Video Playback Completed",
-//        @"heartbeatContentStarted" : @"Video Content Started",
-//        @"heartbeatContentComplete" : @"Video Content Completed",
-//        @"heartbeatBufferStarted" : @"Video Playback Buffer Started",
-//        @"heartbeatBufferCompleted" : @"Video Playback Buffer Completed",
-//        @"heartbeatSeekStarted" : @"Video Playback Seek Started",
-//        @"heartbeatSeekCompleted" : @"Video Playback Seek Completed",
-//        @"heartbeatAdBreakStarted" : @"Video Ad Break Started",
-//        @"heartbeatAdBreakCompleted" : @"Video Ad Break Completed",
-//        @"heartbeatAdStarted" : @"Video Ad Started",
-//        @"heartbeatAdSkipped" : @"Video Ad Skipped",
-//        @"heartbeatAdCompleted" : @"Video Ad Completed",
-//        @"heartbeatPlaybackInterrupted" : @"Video Playback Interrupted",
-//        @"heartbeatQualityUpdated" : @"Video Quality Updated",
-//    };
-//}
-
 /**
  Event tracking for Adobe Heartbeats.
  @param message sent on `track` call
@@ -723,7 +744,7 @@ BOOL isBoolean(NSObject* object){
     if ([eventName isEqualToString:@"heartbeatPlaybackStarted"]) {
         self.heartbeatConfig = [self createConfig:message];
         // createConfig can return nil if the Adobe required field
-        // trackingServer is not properly configured in Segment's UI.
+        // trackingServer is not properly configured at Rudderstack dashboard.
         if (!self.heartbeatConfig) {
             return;
         }
@@ -775,7 +796,7 @@ BOOL isBoolean(NSObject* object){
         self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Content"];
 
         // Adobe examples show that the mediaObject and data should be nil on Chapter Complete events
-        // https://github.com/Adobe-Marketing-Cloud/video-heartbeat-v2/blob/master/sdks/iOS/samples/BasicPlayerSample/BasicPlayerSample/Classes/analytics/VideoAnalyticsProvider.m#L158
+        // https://github.com/Adobe-Marketing-Cloud/media-sdks/blob/75d45dbe559677eb0a2542a5ddad26c81a92e651/sdks/iOS/samples/BasicPlayerSample/BasicPlayerSample/Classes/analytics/VideoAnalyticsProvider.m#L163
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterComplete mediaObject:nil data:nil];
         [NSString stringWithFormat:@"ADBMediaHeartbeat trackEvent:ADBMediaHeartbeatEventChapterComplete mediaObject:nil data:nil"];
         return;
@@ -798,7 +819,6 @@ BOOL isBoolean(NSObject* object){
         case ADBMediaHeartbeatEventBufferComplete:
         case ADBMediaHeartbeatEventSeekComplete:
             [self.playbackDelegate unPausePlayhead];
-            // While there is seek_position in addition to position spec'd on Seek events, when seek completes, the idea is that the position a user is seeking to has been reached and is now the position.
             [self.playbackDelegate updatePlayheadPosition:position];
             break;
         default:
@@ -818,8 +838,6 @@ BOOL isBoolean(NSObject* object){
         return;
     }
 
-    // Video Ad Break Started/Completed are not spec'd. For now, will document for Adobe and
-    // write a proposal to add this to the Video Spec
     if ([eventName isEqualToString:@"heartbeatAdBreakStarted"]) {
         self.mediaObject = [self createMediaObject:eventProperties andEventType:@"Ad Break"];
         [self.mediaHeartbeat trackEvent:ADBMediaHeartbeatEventAdBreakStart mediaObject:self.mediaObject data:nil];
@@ -865,8 +883,8 @@ BOOL isBoolean(NSObject* object){
  initialize an instance of ADBMediaHearbeat
 
  The only required value is the trackingServer,
- which is configured via the Segment Integration
- Settings UI under heartbeat tracking server.
+ which is configured at the Rudderstack dashboard
+ under 'Heartbeat Tracking Server URL''.
 
  @param message sent on `track` call
  @return config Instance of MediaHeartbeatConfig
@@ -874,20 +892,15 @@ BOOL isBoolean(NSObject* object){
 - (ADBMediaHeartbeatConfig *)createConfig:(nonnull RSMessage *) message
 {
     NSDictionary *eventProperties = message.properties;
-//    NSDictionary *options = payload.integrations[@"Adobe Analytics"];
-
     BOOL sslEnabled = false;
     if (self.ssl) {
         sslEnabled = true;
     }
-
-//    BOOL debugEnabled = self.videoDebug;
-
     NSMutableDictionary *infoDictionary = [[[NSBundle mainBundle] infoDictionary] mutableCopy];
     [infoDictionary addEntriesFromDictionary:[[NSBundle mainBundle] localizedInfoDictionary]];
     self.heartbeatConfig.appVersion = infoDictionary[@"CFBundleShortVersionString"] ?: @"unknown";
     if ([self.trackingServerUrl length] == 0) {
-        [RSLogger logVerbose:@"Adobe requires a heartbeat tracking sever configured via Segment's UI in order to initialize and start tracking heartbeat events."];
+        [RSLogger logVerbose:@"Adobe requires a heartbeat tracking sever configured at Rudderstack dashboard in order to initialize and start tracking heartbeat events."];
         return nil;
     }
     self.heartbeatConfig.trackingServer = self.trackingServerUrl;
@@ -896,15 +909,14 @@ BOOL isBoolean(NSObject* object){
     self.heartbeatConfig.ovp = @"unknown";
     self.heartbeatConfig.ssl = sslEnabled;
     self.heartbeatConfig.debugLogging = self.videoDebug;
-
     return self.heartbeatConfig;
 }
 
 /**
  Adobe has standard video metadata to pass in on
- Segment's Video Playback events.
+ Rudderstack Video Playback events.
 
- @param properties Properties passed in on Segment `track`
+ @param properties Properties passed in on `track` call
  @return A dictionary of mapped Standard Video metadata
  */
 - (NSMutableDictionary *)mapStandardVideoMetadata:(NSDictionary *)properties andEventType:(NSString *)eventType
@@ -926,8 +938,7 @@ BOOL isBoolean(NSObject* object){
         }
     }
 
-    // Segment's publisher property exists on the content and ad level. Adobe
-    // needs to interpret this either as an Advertiser (ad events) or Originator (content events)
+    // Adobe interpret Publisher either as an Advertiser (ad events) or Originator (content events)
     NSString *publisher = [properties valueForKey:@"publisher"];
     if (([eventType isEqualToString:@"Ad"] || [eventType isEqualToString:@"Ad Break"]) && [publisher length]) {
         [standardVideoMetadata setObject:properties[@"publisher"] forKey:ADBAdMetadataKeyADVERTISER];
@@ -935,8 +946,6 @@ BOOL isBoolean(NSObject* object){
         [standardVideoMetadata setObject:properties[@"publisher"] forKey:ADBVideoMetadataKeyORIGINATOR];
     }
 
-    // Adobe also has a third type: linear, which we have chosen
-    // to omit as it does not conform to Segment's Video spec
     bool isLivestream = [properties[@"livestream"] boolValue];
     if (isLivestream) {
         [standardVideoMetadata setObject:ADBMediaHeartbeatStreamTypeLIVE forKey:ADBVideoMetadataKeySTREAM_FORMAT];
