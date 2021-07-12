@@ -90,6 +90,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL ssl;
 @property (nonatomic) BOOL isTrackLifecycleEvents;
 @property (nonatomic) BOOL videoDebug;
+@property (nonatomic) BOOL sessionStarted;
 
 @property (nonatomic, strong, nullable) ADBMediaHeartbeat *mediaHeartbeat;
 @property (nonatomic, strong, nullable) id<RSADBMediaHeartbeatFactory> heartbeatFactory;
