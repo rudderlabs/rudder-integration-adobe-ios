@@ -9,6 +9,7 @@
 #import <Rudder/Rudder.h>
 
 #import <AdobeMobileSDK/ADBMobile.h>
+//#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -105,11 +106,6 @@ NS_ASSUME_NONNULL_BEGIN
 -(instancetype) initWithConfig:(NSDictionary *)config
                 withAnalytics:(RSClient *)client
              withRudderConfig:(RSConfig*) rudderConfig
-                        adobe:(id _Nullable)ADBMobileClass
-     andMediaHeartbeatFactory:(id<RSADBMediaHeartbeatFactory> _Nullable)heartbeatFactory
-      andMediaHeartbeatConfig:(ADBMediaHeartbeatConfig *_Nullable)heartbeatConfig
-        andMediaObjectFactory:(id<RSADBMediaObjectFactory> _Nullable)objectFactory
-      andPlaybackDelegateFactory:(id<RSPlaybackDelegateFactory> _Nullable)delegateFactory;
 ;
 
 @end

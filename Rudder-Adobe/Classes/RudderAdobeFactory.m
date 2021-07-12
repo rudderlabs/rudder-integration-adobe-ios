@@ -7,8 +7,6 @@
 
 #import "RudderAdobeFactory.h"
 #import "RudderAdobeIntegration.h"
-#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
-#import <AdobeVideoHeartbeatSDK/ADBMediaHeartbeatConfig.h>
 
 @implementation RudderAdobeFactory
 
@@ -27,23 +25,11 @@ static RudderAdobeFactory *sharedInstance;
 }
 
 -(id<RSIntegration>)initiate:(NSDictionary *)config client:(RSClient *)client rudderConfig:(RSConfig *)rudderConfig{
-    
-    id adobeMobileClass = [ADBMobile class];
-    id heartbeatConfig = [[ADBMediaHeartbeatConfig alloc] init];
-    id<RSADBMediaObjectFactory> mediaObjectFactory = [[RSRealADBMediaObjectFactory alloc] init];
-    id<RSADBMediaHeartbeatFactory> mediaHeartbeatFactory = [[RSRealADBMediaHeartbeatFactory alloc] init];
-    id<RSPlaybackDelegateFactory> delegateFactory = [[RSRealPlaybackDelegateFactory alloc] init];
 
-    
     [RSLogger logDebug:@"Creating RudderIntegrationFactory: Adobe"];
     return [[RudderAdobeIntegration alloc] initWithConfig:config
                                             withAnalytics:client
                                          withRudderConfig:rudderConfig
-                                                    adobe:adobeMobileClass
-                                 andMediaHeartbeatFactory:(id<RSADBMediaHeartbeatFactory> _Nullable)mediaHeartbeatFactory
-                                  andMediaHeartbeatConfig:(ADBMediaHeartbeatConfig *_Nullable)heartbeatConfig
-                                    andMediaObjectFactory:(id<RSADBMediaObjectFactory> _Nullable)mediaObjectFactory
-                                  andPlaybackDelegateFactory:(id<RSPlaybackDelegateFactory> _Nullable)delegateFactory
             ];
 }
 @end
