@@ -441,14 +441,14 @@ BOOL isTrackLifecycleEvents(NSString *eventName) {
                 [contextData setObject:eventProperties[@"orderId"] forKey:@"purchaseid"];
                 [eventProperties removeObjectForKey:@"orderId"];
             }
-            
-            // Get the custom mapped and extraProperties from the payload
-            NSMutableDictionary *customOrMappedProperties = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
-            if (customOrMappedProperties) {
-                [contextData addEntriesFromDictionary:customOrMappedProperties];
-                [customOrMappedProperties removeAllObjects];
-            }
         }
+    }
+    
+    // Get the custom mapped and extraProperties from the payload
+    NSMutableDictionary *customOrMappedProperties = [self getCustomMappedAndExtraProperties:eventProperties andMessage:message];
+    if (customOrMappedProperties) {
+        [contextData addEntriesFromDictionary:customOrMappedProperties];
+        [customOrMappedProperties removeAllObjects];
     }
     
     [self.adobeMobile trackAction:eventName data:contextData];
