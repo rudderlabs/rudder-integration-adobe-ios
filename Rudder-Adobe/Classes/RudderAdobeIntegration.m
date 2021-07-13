@@ -98,7 +98,10 @@ static NSDictionary *adobeEcommerceEvents;
     double bitrate = [properties[@"bitrate"] doubleValue] ?: 0;
     double startupTime = [properties[@"startupTime"] doubleValue] ?: 0;
     double fps = [properties[@"fps"] doubleValue] ?: 0;
-    double droppedFrames = [properties[@"dropped_frames"] doubleValue] ?: 0;
+    double droppedFrames = [properties[@"dropped_frames"] doubleValue] ?: [properties[@"droppedrames"] doubleValue];
+    if (!droppedFrames) {
+        droppedFrames = 0;
+    }
     self.qosObject = [ADBMediaHeartbeat createQoSObjectWithBitrate:bitrate
                                                        startupTime:startupTime
                                                                fps:fps
@@ -344,7 +347,6 @@ static NSDictionary *adobeEcommerceEvents;
     else {
         [RSLogger logDebug:@"Adobe Integration: Message type not supported"];
     }
-
 }
 
 - (void) reset {
@@ -607,7 +609,7 @@ BOOL isBoolean(NSObject* object){
 /** Adobe expects products to formatted as an NSString, delimited with `;`, with values in the following order:
     `"Category;Product;Quantity;Price;eventN=X[|eventN2=X2];eVarN=merch_category[|eVarN2=merch_category2]"`
 
-     Product is a required argument, so if this is not present, Rudderstack does not create the
+     Product Id is a required argument, so if this is not present, Rudderstack does not create the
      `&&products` String. This value can be the product name, sku, or productId,
      which is configured at the Rudderstack dashboard `Product Identifier`.
 
