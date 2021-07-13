@@ -1,10 +1,8 @@
-use_frameworks!
-
 platform :ios, '9.0'
 
 target 'Rudder-Adobe_Example' do
   pod 'Rudder-Adobe', :path => '../'
-
+  
   target 'Rudder-Adobe_Tests' do
     inherit! :search_paths
 

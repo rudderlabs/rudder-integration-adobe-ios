@@ -25,9 +25,11 @@ static RudderAdobeFactory *sharedInstance;
 }
 
 -(id<RSIntegration>)initiate:(NSDictionary *)config client:(RSClient *)client rudderConfig:(RSConfig *)rudderConfig{
+
     [RSLogger logDebug:@"Creating RudderIntegrationFactory: Adobe"];
     return [[RudderAdobeIntegration alloc] initWithConfig:config
-                                                withAnalytics:client
-                                             withRudderConfig:rudderConfig];
+                                            withAnalytics:client
+                                         withRudderConfig:rudderConfig
+            ];
 }
 @end
