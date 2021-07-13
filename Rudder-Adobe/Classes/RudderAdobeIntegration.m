@@ -8,7 +8,13 @@
 #import <Rudder/Rudder.h>
 
 #import <AdobeMobileSDK/ADBMobile.h>
+#if defined(__has_include) && __has_include(<ADBMediaHeartbeat.h>)
 #import <ADBMediaHeartbeat.h>
+#else
+#import "ADBMediaHeartbeat.h"
+#endif
+
+
 
 static NSDictionary *adobeEcommerceEvents;
 
