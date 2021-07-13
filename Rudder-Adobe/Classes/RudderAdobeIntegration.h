@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 @protocol RSADBMediaHeartbeatFactory <NSObject>
-- (ADBMediaHeartbeat *_Nullable) createWithDelegate:(id _Nullable)delegate  andConfig:(ADBMediaHeartbeatConfig *_Nullable)config;
+- (ADBMediaHeartbeat *_Nullable) createWithDelegate:(id)delegate  andConfig:(ADBMediaHeartbeatConfig *)config;
 @end
 
 @interface RSRealADBMediaHeartbeatFactory : NSObject <RSADBMediaHeartbeatFactory>
