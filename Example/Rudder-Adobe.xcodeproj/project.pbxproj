@@ -59,8 +59,6 @@
 		82574D7A8D8494096B3DB776 /* libPods-Rudder-Adobe_Example.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Rudder-Adobe_Example.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		831BC2F8BAD46139600554C0 /* Pods-Rudder-Adobe_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Rudder-Adobe_Example.debug.xcconfig"; path = "Target Support Files/Pods-Rudder-Adobe_Example/Pods-Rudder-Adobe_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		8C957F29267B4CC900ADB9B7 /* MediaSDK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = MediaSDK.xcframework; sourceTree = "<group>"; };
-		8C957F2A267B4CC900ADB9B7 /* MediaSDKTV.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = MediaSDKTV.xcframework; sourceTree = "<group>"; };
 		8C9580ED2683223800ADB9B7 /* ADBMobileConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = ADBMobileConfig.json; sourceTree = "<group>"; };
 		A5A6D50DF14C6F6409B28C0C /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		C850E2310FF876E27E512DA3 /* libPods-Rudder-Adobe_Tests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Rudder-Adobe_Tests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -92,7 +90,6 @@
 			isa = PBXGroup;
 			children = (
 				8C9580ED2683223800ADB9B7 /* ADBMobileConfig.json */,
-				8C957F28267B4CC900ADB9B7 /* libs */,
 				60FF7A9C1954A5C5007DD14C /* Podspec Metadata */,
 				6003F593195388D20070C39A /* Example for Rudder-Adobe */,
 				6003F5B5195388D20070C39A /* Tests */,
@@ -175,16 +172,6 @@
 				A5A6D50DF14C6F6409B28C0C /* LICENSE */,
 			);
 			name = "Podspec Metadata";
-			sourceTree = "<group>";
-		};
-		8C957F28267B4CC900ADB9B7 /* libs */ = {
-			isa = PBXGroup;
-			children = (
-				8C957F29267B4CC900ADB9B7 /* MediaSDK.xcframework */,
-				8C957F2A267B4CC900ADB9B7 /* MediaSDKTV.xcframework */,
-			);
-			name = libs;
-			path = "../../media-sdks-ios-v2.3.0/sdks/iOS/libs";
 			sourceTree = "<group>";
 		};
 		CBAE0E9FA4D4E006016F7E8A /* Pods */ = {
