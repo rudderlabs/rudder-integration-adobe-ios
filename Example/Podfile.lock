@@ -1,0 +1,36 @@
+PODS:
+  - AdobeMobileSDK (4.21.2):
+    - AdobeMobileSDK/iOS (= 4.21.2)
+  - AdobeMobileSDK/iOS (4.21.2)
+  - AdobeVideoHeartbeatSDK (2.1):
+    - AdobeVideoHeartbeatSDK/iOS (= 2.1)
+  - AdobeVideoHeartbeatSDK/iOS (2.1):
+    - AdobeMobileSDK
+  - Rudder (1.7.1)
+  - Rudder-Adobe (1.0.0):
+    - AdobeMobileSDK
+    - AdobeVideoHeartbeatSDK
+    - Rudder
+
+DEPENDENCIES:
+  - Rudder-Adobe (from `../`)
+
+SPEC REPOS:
+  trunk:
+    - AdobeMobileSDK
+    - AdobeVideoHeartbeatSDK
+    - Rudder
+
+EXTERNAL SOURCES:
+  Rudder-Adobe:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  AdobeMobileSDK: 0072f212876db078ffefdf42c5e5d6537dd434cb
+  AdobeVideoHeartbeatSDK: 757bf920c26023b6c9839afd284e1f0e65a57108
+  Rudder: 61568212171ddc2efe7785d0a6a0de589d181370
+  Rudder-Adobe: 962119edcc26b05d87fbac0f5ba3015a77f211f4
+
+PODFILE CHECKSUM: 40c3e63b441c3e210e107cf10fbdecd7ce6a1f82
+
+COCOAPODS: 1.11.3
