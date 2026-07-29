@@ -25,4 +25,4 @@ jobs:
         run: gem install cocoapods
       
       - name: Execute pod lint
-        run: pod lib lint --no-clean --allow-warnings
+        run: IPHONEOS_DEPLOYMENT_TARGET=12.0 pod lib lint --no-clean --allow-warnings
