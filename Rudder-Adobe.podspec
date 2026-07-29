@@ -25,8 +25,6 @@ Rudder is a platform for collecting, storing and routing customer event data to 
 
   s.source_files = 'Rudder-Adobe/Classes/**/*'
 
-  s.static_framework = true
-
   s.dependency 'Rudder', '~> 1.0'
   
   s.ios.deployment_target = '12.0'

@@ -27,4 +27,4 @@ jobs:
       - name: Execute pod lint
         env:
           XCODE_XCCONFIG_FILE: ${{ github.workspace }}/.github/DeploymentTarget.xcconfig
-        run: pod lib lint --no-clean --allow-warnings --verbose
+        run: pod lib lint --use-libraries --no-clean --allow-warnings --verbose
