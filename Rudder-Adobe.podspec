@@ -15,7 +15,7 @@ Rudder is a platform for collecting, storing and routing customer event data to 
   s.license          = { :type => "ELv2", :file => "LICENSE.md" }
   s.author           = { 'RudderStack' => 'venkat@rudderstack.com' }
   s.source           = { :git => 'https://github.com/rudderlabs/rudder-integration-adobe-ios.git', :tag => "v#{s.version}" }
-  s.platform         = :ios, "9.0"
+  s.platform         = :ios, "12.0"
 
   ## Ref: https://github.com/CocoaPods/CocoaPods/issues/10065
   s.pod_target_xcconfig = {
@@ -25,16 +25,14 @@ Rudder is a platform for collecting, storing and routing customer event data to 
 
   s.source_files = 'Rudder-Adobe/Classes/**/*'
 
-  s.static_framework = true
-
-  s.dependency 'Rudder'
+  s.dependency 'Rudder', '~> 1.0'
   
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '12.0'
   
 
   s.ios.dependency 'AdobeMobileSDK'
   
-  s.dependency 'AdobeVideoHeartbeatSDK'
+  s.dependency 'AdobeMediaSDK', '~> 2.3'
 
 
 end

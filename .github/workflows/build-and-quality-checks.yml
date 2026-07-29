@@ -10,7 +10,7 @@ permissions:
 jobs:
   build:
     name: Code Quality Checks
-    runs-on: macOS-latest
+    runs-on: macos-15
     
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -25,4 +25,6 @@ jobs:
         run: gem install cocoapods
       
       - name: Execute pod lint
-        run: pod lib lint --no-clean --allow-warnings
+        env:
+          XCODE_XCCONFIG_FILE: ${{ github.workspace }}/.github/DeploymentTarget.xcconfig
+        run: pod lib lint --use-libraries --no-clean --allow-warnings --verbose
