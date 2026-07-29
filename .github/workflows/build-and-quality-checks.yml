@@ -10,7 +10,7 @@ permissions:
 jobs:
   build:
     name: Code Quality Checks
-    runs-on: macOS-latest
+    runs-on: macos-15
     
     steps:
       - name: Harden the runner (Audit all outbound calls)
