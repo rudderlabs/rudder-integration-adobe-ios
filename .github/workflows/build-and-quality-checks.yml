@@ -36,3 +36,19 @@ jobs:
         env:
           XCODE_XCCONFIG_FILE: ${{ github.workspace }}/.github/DeploymentTarget.xcconfig
         run: pod lib lint ${{ matrix.lint_flags }} --no-clean --allow-warnings --verbose
+
+  required-check:
+    name: Code Quality Checks
+    if: ${{ always() }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Verify all code quality checks passed
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: test "$BUILD_RESULT" = success
