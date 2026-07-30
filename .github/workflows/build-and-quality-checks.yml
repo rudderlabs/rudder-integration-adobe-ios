@@ -9,8 +9,16 @@ permissions:
 
 jobs:
   build:
-    name: Code Quality Checks
+    name: Code Quality Checks (${{ matrix.linkage }})
     runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - linkage: static libraries
+            lint_flags: --use-libraries
+          - linkage: static frameworks
+            lint_flags: --use-static-frameworks
     
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -27,4 +35,4 @@ jobs:
       - name: Execute pod lint
         env:
           XCODE_XCCONFIG_FILE: ${{ github.workspace }}/.github/DeploymentTarget.xcconfig
-        run: pod lib lint --use-libraries --no-clean --allow-warnings --verbose
+        run: pod lib lint ${{ matrix.lint_flags }} --no-clean --allow-warnings --verbose
