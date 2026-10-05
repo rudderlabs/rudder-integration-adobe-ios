@@ -7,6 +7,25 @@
   </a>
 </p>
 
+---
+
+> # ⚠️ Archived Repository
+>
+> This repository has been archived and is no longer maintained.
+>
+> The Rudder-Adobe integration is no longer part of RudderStack's supported SDK offerings.
+>
+> **Status**
+>
+> - No new features
+> - No bug fixes
+> - No security updates
+> - Issues and pull requests are not monitored
+>
+> The code remains available in read-only mode for historical reference.
+
+---
+
 # What is RudderStack?
 
 [RudderStack](https://rudderstack.com/) is a **customer data pipeline** tool for collecting, routing and processing data from your websites, apps, cloud tools, and data warehouse.
